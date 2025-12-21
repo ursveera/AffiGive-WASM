@@ -1,9 +1,10 @@
 {
   "version": 2,
   "dgSpecHash": "wHGkB/FAnMc=",
-  "success": false,
+  "success": true,
   "projectFilePath": "F:\\Visual Studio Projects\\AffiGive\\AffiGive_API_V1\\WASM\\WASM.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Ursve\\.nuget\\packages\\affigive.sharedlib\\1.0.0\\affigive.sharedlib.1.0.0.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\blazored.localstorage\\4.5.0\\blazored.localstorage.4.5.0.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.aspnetcore.authorization\\8.0.22\\microsoft.aspnetcore.authorization.8.0.22.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.aspnetcore.components\\8.0.22\\microsoft.aspnetcore.components.8.0.22.nupkg.sha512",
@@ -34,20 +35,10 @@
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.jsinterop\\8.0.22\\microsoft.jsinterop.8.0.22.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.jsinterop.webassembly\\8.0.22\\microsoft.jsinterop.webassembly.8.0.22.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.net.sdk.webassembly.pack\\9.0.1\\microsoft.net.sdk.webassembly.pack.9.0.1.nupkg.sha512",
+    "C:\\Users\\Ursve\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.1\\system.diagnostics.diagnosticsource.10.0.1.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\system.io.pipelines\\8.0.0\\system.io.pipelines.8.0.0.nupkg.sha512",
     "C:\\Users\\Ursve\\.nuget\\packages\\microsoft.netcore.app.runtime.mono.browser-wasm\\8.0.12\\microsoft.netcore.app.runtime.mono.browser-wasm.8.0.12.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1101",
-      "level": "Error",
-      "message": "Unable to find package AffiGive.SharedLib. No packages exist with this id in source(s): nuget.org. PackageSourceMapping is enabled, the following source(s) were not considered: C:\\Program Files\\dotnet\\library-packs.",
-      "libraryId": "AffiGive.SharedLib",
-      "targetGraphs": [
-        "net8.0",
-        "net8.0/browser-wasm"
-      ]
-    }
-  ]
+  "logs": []
 }

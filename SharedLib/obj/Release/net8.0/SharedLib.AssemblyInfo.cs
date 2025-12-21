@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Shared DTOs and models for AffiGive applications")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eee1fbfa707d5ee8311c263a7f14314dfe7f9642")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ea39e7b6faa5d334c704df26bfc874f4a224bbf")]
 [assembly: System.Reflection.AssemblyProductAttribute("SharedLib")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SharedLib")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

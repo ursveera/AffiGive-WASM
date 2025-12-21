@@ -7,7 +7,7 @@
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <description>Shared DTOs and models for AffiGive applications</description>
-    <repository type="git" url="https://github.com/ursveera/AffiGive-WASM" commit="eee1fbfa707d5ee8311c263a7f14314dfe7f9642" />
+    <repository type="git" url="https://github.com/ursveera/AffiGive-WASM" commit="5ea39e7b6faa5d334c704df26bfc874f4a224bbf" />
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="Newtonsoft.Json" version="13.0.4" exclude="Build,Analyzers" />
@@ -15,6 +15,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\DAO\SharedLib\bin\Release\net8.0\SharedLib.dll" target="lib\net8.0\SharedLib.dll" />
+    <file src="F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\WASM\SharedLib\bin\Release\net8.0\SharedLib.dll" target="lib\net8.0\SharedLib.dll" />
   </files>
 </package>
