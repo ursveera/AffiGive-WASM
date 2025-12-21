@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DAO\SharedLib\SharedLib.csproj" />
+    <PackageReference Include="AffiGive.SharedLib" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
