@@ -17,6 +17,41 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs" />
+    <Compile Include="obj\Debug\net8.0\SharedLib.AssemblyInfo.cs" />
+    <Compile Include="obj\Debug\net8.0\SharedLib.GlobalUsings.g.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="bin\Debug\net8.0\SharedLib.deps.json" />
+    <Content Include="bin\Release\net8.0\SharedLib.deps.json" />
+    <Content Include="obj\Debug\net8.0\SharedLib.csproj.FileListAbsolute.txt" />
+    <Content Include="obj\Debug\net8.0\SharedLib.sourcelink.json" />
+    <Content Include="obj\project.assets.json" />
+    <Content Include="obj\SharedLib.csproj.nuget.dgspec.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="bin\Debug\net8.0\SharedLib.dll" />
+    <None Include="bin\Debug\net8.0\SharedLib.pdb" />
+    <None Include="bin\Release\AffiGive.SharedLib.1.0.0.nupkg" />
+    <None Include="bin\Release\net8.0\SharedLib.dll" />
+    <None Include="bin\Release\net8.0\SharedLib.pdb" />
+    <None Include="obj\Debug\net8.0\refint\SharedLib.dll" />
+    <None Include="obj\Debug\net8.0\ref\SharedLib.dll" />
+    <None Include="obj\Debug\net8.0\SharedLib.AssemblyInfoInputs.cache" />
+    <None Include="obj\Debug\net8.0\SharedLib.assets.cache" />
+    <None Include="obj\Debug\net8.0\SharedLib.csproj.AssemblyReference.cache" />
+    <None Include="obj\Debug\net8.0\SharedLib.csproj.CoreCompileInputs.cache" />
+    <None Include="obj\Debug\net8.0\SharedLib.dll" />
+    <None Include="obj\Debug\net8.0\SharedLib.GeneratedMSBuildEditorConfig.editorconfig" />
+    <None Include="obj\Debug\net8.0\SharedLib.pdb" />
+    <None Include="obj\project.nuget.cache" />
+    <None Include="obj\SharedLib.csproj.nuget.g.props" />
+    <None Include="obj\SharedLib.csproj.nuget.g.targets" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
