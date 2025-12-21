@@ -1,0 +1,370 @@
+﻿@page "/tasks"
+@using AffiGive_API_V1.Models
+@using AffigiveUIBalzor.api
+@inject ITaskApiGateway TaskApi
+<h3 class="mb-3">Task Manager</h3>
+
+<!-- Search Filter -->
+<input class="form-control mb-3"
+       placeholder="Search by task name..."
+       @bind="searchText"
+       @bind:event="oninput" />
+<!-- Task Table -->
+<!-- Modern Task Table -->
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        <i class="bi bi-list-check me-2"></i> Task List
+    </div>
+
+    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+
+            <thead class="table-light position-sticky top-0 shadow-sm" style="z-index: 5;">
+                <tr>
+                    <th class="sortable" @onclick="() => SortBy(nameof(TaskMaster.TaskName))">Task Name</th>
+                    <th class="sortable" @onclick="() => SortBy(nameof(TaskMaster.TaskThumbnail))">Task Thumbnail</th>
+                    <th class="sortable" @onclick="() => SortBy(nameof(TaskMaster.TaskNavUrl))">Task NavUrl</th>
+                    <th class="sortable" @onclick="() => SortBy(nameof(TaskMaster.TaskType))">Type</th>
+                    <th>Description</th>
+                    <th class="sortable" @onclick="() => SortBy(nameof(TaskMaster.CoinReward))">Coins</th>
+                    <th>Active</th>
+                    <th class="text-end" style="width: 150px;">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var task in filteredTasks)
+                {
+                    <tr class="table-row-modern">
+                        <td>@task.TaskName</td>
+                        <td style="max-width:300px;">
+                            @if (!string.IsNullOrWhiteSpace(task.TaskThumbnail))
+                            {
+                                <img src="@task.TaskThumbnail"
+                                     alt="thumbnail"
+                                     style="width:128px; height:128px; object-fit:fill; border-radius:6px;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">No Image</span>
+                            }
+                        </td>
+                        <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                            title="@task.TaskNavUrl">
+                            <a href="@task.TaskNavUrl" target="_blank">@task.TaskNavUrl</a>
+                        </td>
+                        <td><span class="badge bg-primary bg-opacity-75">@task.TaskType</span></td>
+                        <!-- TEXT WRAPPING WITH TOOLTIP -->
+                        <td style="max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                            title="@task.Description">
+                            @task.Description
+                        </td>
+
+                        <td><span class="badge bg-success bg-opacity-75">@task.CoinReward</span></td>
+
+                        <td>
+                            @if (task.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-1 modern-btn"
+                                    title="Edit Task"
+                                    @onclick="() => EditTask(task)">
+                                <i class="bi bi-pencil-square">Edit</i>
+                            </button>
+
+                            <button class="btn btn-outline-danger btn-sm modern-btn"
+                                    title="Delete Task"
+                                    @onclick="() => DeleteTask(task.TaskId)">
+                                <i class="bi bi-trash">Delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEditMode ? "✏️ Edit Task" : "➕ Create New Task")
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Task Name</label>
+                <input class="form-control modern-input" @bind="taskModel.TaskName" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Task Type</label>
+                <input class="form-control modern-input" @bind="taskModel.TaskType" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Task Thumbnail</label>
+                <input class="form-control modern-input" @bind="taskModel.TaskThumbnail" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Task URL</label>
+                <input class="form-control modern-input" @bind="taskModel.TaskNavUrl" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Coin Reward</label>
+                <input type="number" class="form-control modern-input" @bind="taskModel.CoinReward" />
+            </div>
+
+            <div class="col-md-12">
+                <label class="form-label fw-semibold">Description</label>
+                <textarea rows="3" class="form-control modern-input" @bind="taskModel.Description"></textarea>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-center">
+                <label class="form-label fw-semibold me-3">Active</label>
+
+                <!-- Modern Switch -->
+                <label class="switch">
+                    <input type="checkbox" @bind="taskModel.IsActive">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (isEditMode)
+                {
+                    <button class="btn btn-warning px-4 me-2 modern-btn" @onclick="UpdateTask">
+                        <i class="bi bi-save me-1"></i> Update
+                    </button>
+
+                    <button class="btn btn-secondary px-4 modern-btn" @onclick="CancelEdit">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary px-4 modern-btn" @onclick="CreateTask">
+                        <i class="bi bi-plus-circle me-1"></i> Create Task
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Modern Inputs */
+    .modern-input {
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        transition: 0.2s;
+    }
+
+        .modern-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+        }
+
+    /* Modern Buttons */
+    .modern-btn {
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+        .modern-btn:hover {
+            transform: scale(1.03);
+        }
+
+    /* Toggle Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+        margin-top: 2px;
+    }
+
+        .switch input {
+            display: none;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #ccc;
+        border-radius: 24px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: .3s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .3s;
+        }
+
+    input:checked + .slider {
+        background-color: #0d6efd;
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+</style>
+<style>
+    /* Sticky Header */
+    thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+    }
+
+    /* Hover animation */
+    .table-row-modern:hover {
+        background-color: #f1f5ff !important;
+        transition: 0.2s ease-in-out;
+    }
+
+    /* Sortable column indicator */
+    th.sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+        th.sortable:hover {
+            color: #0d6efd;
+        }
+
+    /* Modern small buttons */
+    .modern-btn {
+        border-radius: 6px;
+        padding: 4px 8px;
+        transition: 0.2s;
+    }
+
+        .modern-btn:hover {
+            transform: scale(1.1);
+        }
+</style>
+
+@code {
+    private List<TaskMaster> allTasks = new();
+    private List<TaskMaster> filteredTasks = new();
+
+    private TaskMaster taskModel = new();
+    private bool isEditMode = false;
+    private string searchText = "";
+    private string sortColumn = "";
+    private bool sortAscending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        allTasks = (await TaskApi.GetAllTasksAsync()).ToList();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredTasks = allTasks
+            .Where(t => string.IsNullOrWhiteSpace(searchText)
+                || t.TaskName.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        ApplySorting();
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+            sortAscending = !sortAscending;
+        else
+        {
+            sortColumn = column;
+            sortAscending = true;
+        }
+
+        ApplySorting();
+    }
+
+    private void ApplySorting()
+    {
+        if (!string.IsNullOrEmpty(sortColumn))
+        {
+            filteredTasks = sortAscending
+                ? filteredTasks.OrderBy(t => t.GetType().GetProperty(sortColumn)?.GetValue(t)).ToList()
+                : filteredTasks.OrderByDescending(t => t.GetType().GetProperty(sortColumn)?.GetValue(t)).ToList();
+        }
+    }
+
+    private async Task CreateTask()
+    {
+        await TaskApi.CreateTaskAsync(taskModel);
+        taskModel = new();
+        await LoadTasks();
+    }
+
+    private void EditTask(TaskMaster task)
+    {
+        taskModel = new TaskMaster
+            {
+                TaskId = task.TaskId,
+                TaskName = task.TaskName,
+                TaskType = task.TaskType,
+                Description = task.Description,
+                CoinReward = task.CoinReward,
+                IsActive = task.IsActive,
+                TaskThumbnail = task.TaskThumbnail,
+                TaskNavUrl = task.TaskNavUrl
+            };
+
+        isEditMode = true;
+    }
+
+    private async Task UpdateTask()
+    {
+        await TaskApi.UpdateTaskAsync(taskModel);
+        isEditMode = false;
+        taskModel = new();
+        await LoadTasks();
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        taskModel = new();
+    }
+
+    private async Task DeleteTask(int id)
+    {
+        await TaskApi.DeleteTaskAsync(id);
+        await LoadTasks();
+    }
+}

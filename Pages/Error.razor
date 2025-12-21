@@ -1,0 +1,30 @@
+﻿@page "/error"
+@using System.Diagnostics
+
+<PageTitle>Error</PageTitle>
+
+<h1 class="text-danger">Error</h1>
+<h2 class="text-danger">Something went wrong.</h2>
+
+@if (ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong>
+        <code>@RequestId</code>
+    </p>
+}
+
+<p>
+    Please try again or contact support if the problem persists.
+</p>
+
+@code {
+    private string? RequestId;
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized()
+    {
+        // Client-side request identifier
+        RequestId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
+    }
+}

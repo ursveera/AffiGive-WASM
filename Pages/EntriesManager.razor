@@ -1,0 +1,312 @@
+﻿@page "/admin/entries"
+@using AffiGive_API_V1.Models
+@using AffiGive_API_V1.DTO
+@using AffigiveUIBalzor.api
+@inject IEntryApiGateway EntryApi
+
+<h3 class="mb-3">🎟️ Entry Manager</h3>
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        📃 Entry List
+    </div>
+
+    <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+
+            <thead class="table-light position-sticky top-0 shadow-sm" style="z-index:5;">
+                <tr>
+                    <th>Name</th>
+                    <th>Nickname</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Video Code</th>
+                    <th>Valid</th>
+                    <th style="width:150px;" class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var e in filteredEntries)
+                {
+                    <tr class="table-row-modern">
+                        <td>@e.Name</td>
+                        <td>@e.NickName</td>
+                        <td>@e.Email</td>
+                        <td>@e.Phone</td>
+                        <td>@e.Code</td>
+
+                        <td>
+                            @if (e.IsValid)
+                            {
+                                <span class="badge bg-success">Valid</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-secondary">Invalid</span>
+                            }
+                        </td>
+
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm modern-btn me-1"
+                                    @onclick="() => EditEntry(e)">
+                                <i class="bi bi-pencil-square">Edit</i>
+                            </button>
+
+                            <button class="btn btn-outline-danger btn-sm modern-btn"
+                                    @onclick="() => DeleteEntry(e.Id)">
+                                <i class="bi bi-trash">Delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+</div>
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEdit ? "✏️ Edit Entry" : "➕ Add Entry")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Name</label>
+                <input class="form-control modern-input" @bind="entryModel.Name" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Nickname</label>
+                <input class="form-control modern-input" @bind="entryModel.NickName" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Email</label>
+                <input class="form-control modern-input" @bind="entryModel.Email" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Phone</label>
+                <input class="form-control modern-input" @bind="entryModel.Phone" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Address</label>
+                <input class="form-control modern-input" @bind="entryModel.Address" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Video Code</label>
+                <input class="form-control modern-input" @bind="entryModel.Code" />
+            </div>
+
+            <div class="col-md-4 d-flex align-items-center mt-3">
+                <label class="form-label fw-semibold me-3">Valid</label>
+                <label class="switch">
+                    <input type="checkbox" @bind="entryModel.IsValid">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (isEdit)
+                {
+                    <button class="btn btn-warning px-4 modern-btn me-2" @onclick="UpdateEntry">
+                        <i class="bi bi-save me-2"></i> Update Entry
+                    </button>
+
+                    <button class="btn btn-secondary px-4 modern-btn" @onclick="CancelEdit">
+                        <i class="bi bi-x-circle me-2"></i> Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary px-4 modern-btn" @onclick="AddEntry">
+                        <i class="bi bi-plus-circle me-2"></i> Add Entry
+                    </button>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<Entry> allEntries = new();
+    private List<Entry> filteredEntries = new();
+
+    private Entry entryModel = new();
+    private string searchNick = "";
+    private string searchCode = "";
+    private bool _showValidOnly;
+    private bool showValidOnly
+    {
+        get => _showValidOnly;
+        set
+        {
+            _showValidOnly = value;
+            LoadEntries();   // ← auto-refresh
+        }
+    }
+    private bool isEdit = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        var result = await EntryApi.GetAllAsync(1, 5000);
+        allEntries = result.Items.ToList();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredEntries = allEntries
+            .Where(e =>
+                (string.IsNullOrWhiteSpace(searchNick) || e.NickName.Contains(searchNick, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(searchCode) || e.Code.Contains(searchCode, StringComparison.OrdinalIgnoreCase)) &&
+                (!showValidOnly || e.IsValid)
+            )
+            .ToList();
+    }
+
+    private async Task AddEntry()
+    {
+        var response = await EntryApi.AddEntryAsync(entryModel);
+        if (response.entry != null)
+        {
+            allEntries.Add(entryModel);
+            ApplyFilter();
+            entryModel = new();
+        }
+    }
+
+    private void EditEntry(Entry e)
+    {
+        isEdit = true;
+        entryModel = new Entry
+            {
+                Id = e.Id,
+                Name = e.Name,
+                NickName = e.NickName,
+                Email = e.Email,
+                Phone = e.Phone,
+                Address = e.Address,
+                Code = e.Code,
+                IsValid = e.IsValid,
+                CreatedAt = e.CreatedAt
+            };
+    }
+
+    private async Task UpdateEntry()
+    {
+        await EntryApi.UpdateEntryAsync(entryModel);
+
+        var existing = allEntries.FirstOrDefault(x => x.Id == entryModel.Id);
+        if (existing != null)
+        {
+            existing.Name = entryModel.Name;
+            existing.NickName = entryModel.NickName;
+            existing.Email = entryModel.Email;
+            existing.Phone = entryModel.Phone;
+            existing.Address = entryModel.Address;
+            existing.Code = entryModel.Code;
+            existing.IsValid = entryModel.IsValid;
+        }
+
+        ApplyFilter();
+        entryModel = new();
+        isEdit = false;
+    }
+
+    private void CancelEdit()
+    {
+        isEdit = false;
+        entryModel = new();
+    }
+
+    private async Task DeleteEntry(Guid id)
+    {
+        await EntryApi.DeleteEntryAsync(id);
+        allEntries.RemoveAll(e => e.Id == id);
+        ApplyFilter();
+    }
+
+}
+<style>
+    .modern-input {
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        transition: 0.25s;
+    }
+
+        .modern-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.15rem rgba(13,110,253,0.25);
+        }
+
+    .modern-btn {
+        border-radius: 8px;
+        transition: .2s;
+    }
+
+        .modern-btn:hover {
+            transform: scale(1.08);
+        }
+
+    .table-row-modern:hover {
+        background-color: #eef3ff !important;
+        transition: .2s;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+
+        .switch input {
+            display: none;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #ccc;
+        border-radius: 34px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: .4s;
+    }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+    input:checked + .slider {
+        background-color: #0d6efd;
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+</style>

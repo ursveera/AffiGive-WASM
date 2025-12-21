@@ -1,0 +1,32 @@
+﻿@page "/"
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+<input @bind="username" placeholder="Username" />
+<input type="password" @bind="password" placeholder="Password" />
+<button @onclick="Login1">Login</button>
+
+@if (error != null)
+{
+    <p style="color:red">@error</p>
+}
+
+@code {
+    string username = "";
+    string password = "";
+    string? error;
+
+    async Task Login1()
+    {
+        var ok = await Auth.LoginAsync(username, password);
+        if (!ok)
+        {
+            error = "Invalid login";
+            return;
+        }
+
+        Nav.NavigateTo("/");
+    }
+}

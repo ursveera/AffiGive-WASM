@@ -1,0 +1,2 @@
+F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\WASM\bin\Release\net8.0\publish\emcc-props.json
+F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\WASM\bin\Release\net8.0\publish\web.config
