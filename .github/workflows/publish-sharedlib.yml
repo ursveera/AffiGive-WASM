@@ -1,0 +1,33 @@
+name: Publish SharedLib to NuGet
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "SharedLib/**"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore SharedLib
+      run: dotnet restore SharedLib/SharedLib.csproj
+
+    - name: Build SharedLib
+      run: dotnet build SharedLib/SharedLib.csproj -c Release --no-restore
+
+    - name: Pack SharedLib
+      run: dotnet pack SharedLib/SharedLib.csproj -c Release -o out --no-build
+
+    - name: Publish to NuGet
+      run: dotnet nuget push out/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
