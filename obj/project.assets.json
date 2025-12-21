@@ -524,7 +524,7 @@
           }
         }
       },
-      "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.1": {
+      "Microsoft.NET.Sdk.WebAssembly.Pack/9.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
@@ -1113,7 +1113,7 @@
           }
         }
       },
-      "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.1": {
+      "Microsoft.NET.Sdk.WebAssembly.Pack/9.0.1": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
@@ -2112,15 +2112,16 @@
         "microsoft.jsinterop.webassembly.nuspec"
       ]
     },
-    "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.1": {
-      "sha512": "8XSP0Wu0xpj3xr88WwW43GiklXXiM27n6V8CXk35wT1MjxCfmudQJYmLbirWiPiqU1vCIWTIczPpI40ivC3ruQ==",
+    "Microsoft.NET.Sdk.WebAssembly.Pack/9.0.1": {
+      "sha512": "/+0fpalaBrtXNnoso2oIMi3W30+bDWe8lrXkRj6qKMKsTpDfJboxuVn+E9XDpuk2zTBqjd6ZDStD6F9KYMj7cQ==",
       "type": "package",
-      "path": "microsoft.net.sdk.webassembly.pack/10.0.1",
+      "path": "microsoft.net.sdk.webassembly.pack/9.0.1",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "LICENSE.TXT",
         "THIRD-PARTY-NOTICES.TXT",
         "WasmAppHost/BrowserDebugHost.deps.json",
         "WasmAppHost/BrowserDebugHost.dll",
@@ -2145,12 +2146,12 @@
         "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets",
         "build/Wasm.web.config",
         "build/browser.runtimeconfig.template.json",
-        "microsoft.net.sdk.webassembly.pack.10.0.1.nupkg.sha512",
+        "microsoft.net.sdk.webassembly.pack.9.0.1.nupkg.sha512",
         "microsoft.net.sdk.webassembly.pack.nuspec",
-        "tools/net10.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
-        "tools/net10.0/Microsoft.NET.WebAssembly.Webcil.dll",
         "tools/net472/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
-        "tools/net472/Microsoft.NET.WebAssembly.Webcil.dll"
+        "tools/net472/Microsoft.NET.WebAssembly.Webcil.dll",
+        "tools/net9.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
+        "tools/net9.0/Microsoft.NET.WebAssembly.Webcil.dll"
       ]
     },
     "Newtonsoft.Json/13.0.4": {
@@ -2252,7 +2253,7 @@
       "Microsoft.AspNetCore.Components.WebAssembly >= 8.0.22",
       "Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 8.0.22",
       "Microsoft.Extensions.Http >= 10.0.1",
-      "Microsoft.NET.Sdk.WebAssembly.Pack >= 10.0.1",
+      "Microsoft.NET.Sdk.WebAssembly.Pack >= 9.0.1",
       "SharedLib >= 1.0.0"
     ]
   },
@@ -2304,7 +2305,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -2330,7 +2331,7 @@
           "Microsoft.NET.Sdk.WebAssembly.Pack": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.1, )",
+            "version": "[9.0.1, )",
             "autoReferenced": true
           }
         },
@@ -2348,7 +2349,7 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.NETCore.App.Runtime.Mono.browser-wasm",
-            "version": "[8.0.22, 8.0.22]"
+            "version": "[8.0.12, 8.0.12]"
           }
         ],
         "frameworkReferences": {
@@ -2356,7 +2357,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
