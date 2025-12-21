@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include=".github\workflows\deploy.yml" />
+    <None Include=".github\workflows\publish-sharedlib.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.22" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.22" PrivateAssets="all" />
