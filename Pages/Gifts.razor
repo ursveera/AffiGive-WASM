@@ -1,0 +1,340 @@
+﻿@page "/admin/gifts"
+@using SharedLib.Models
+@using WASM.api
+@inject IGiftApi GiftApi
+
+<h3 class="mb-3">🎁 Gift Manager</h3>
+
+<input class="form-control mb-3"
+       placeholder="Search by provider or prize pool..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        Gift List
+    </div>
+
+    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light position-sticky top-0 shadow-sm">
+                <tr>
+                    <th @onclick="() => SortBy(nameof(GiftMaster.Provider))">Provider</th>
+                    <th>Image</th>
+                    <th>Prize Pool</th>
+                    <th>Winners</th>
+                    <th>Coins</th>
+                    <th>Slots</th>
+                     <th>From</th>
+                    <th>To</th>
+                    <th>Ends</th>
+                    <th>Active</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!filteredGifts.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            🚫 No gifts found
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var gift in filteredGifts)
+                    {
+                        <tr>
+                            <td><span class="badge bg-primary">@gift.Provider</span></td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(gift.Image))
+                                {
+                                    <img src="@gift.Image"
+                                         style="width:70px;height:70px;border-radius:6px;object-fit:cover;" />
+                                }
+                            </td>
+
+                            <td>@gift.PrizePoolText</td>
+                            <td>@gift.WinnerText</td>
+
+                            <td>
+                                <span class="badge bg-success">@gift.CoinsRequired</span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-info">
+                                    @gift.RemainingSlots / @gift.TotalSlots
+                                </span>
+                            </td>
+                            <td>
+                                @gift.FromDate.ToString("dd MMM yyyy")
+                            </td>
+
+                            <td>
+                                @gift.ToDate.ToString("dd MMM yyyy")
+                            </td>
+                            <td>
+                                <span class="badge @GetEndsBadge(gift.ToDate)">
+                                    @GetEndsText(gift.ToDate)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge @(gift.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(gift.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => EditGift(gift)">
+                                    ✏️ Edit
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm"
+                                        @onclick="() => DeleteGift(gift.Id)">
+                                    🗑 Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEditMode ? "✏️ Edit Gift" : "➕ Create Gift")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label">Provider</label>
+                <input class="form-control" @bind="giftModel.Provider" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Prize Pool Text</label>
+                <input class="form-control" @bind="giftModel.PrizePoolText" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Winner Text</label>
+                <input class="form-control" @bind="giftModel.WinnerText" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Coins Required</label>
+                <input type="number" class="form-control" @bind="giftModel.CoinsRequired" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Total Slots</label>
+                <input type="number" class="form-control" @bind="giftModel.TotalSlots" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Remaining Slots</label>
+                <input type="number" class="form-control" @bind="giftModel.RemainingSlots" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">From Date</label>
+                <input type="date"
+                       class="form-control"
+                       @bind-value="giftModel.FromDate"
+                       @bind-value:event="onchange" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">To Date</label>
+                <input type="date"
+                       class="form-control"
+                       @bind-value="giftModel.ToDate"
+                       @bind-value:event="onchange" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Image URL</label>
+                <input class="form-control" @bind="giftModel.Image" />
+            </div>
+
+            <div class="col-md-4 d-flex align-items-center">
+                <label class="me-3">Active</label>
+                <input type="checkbox" @bind="giftModel.IsActive" />
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (!IsDateValid())
+                {
+                    <div class="text-danger mb-2">
+                        ❌ To Date must be same or after From Date
+                    </div>
+                }
+
+                @if (isEditMode)
+                {
+                    <button class="btn btn-warning me-2"
+                            disabled="@(!IsDateValid())"
+                            @onclick="UpdateGift">
+                        💾 Update
+                    </button>
+
+                    <button class="btn btn-secondary"
+                            @onclick="CancelEdit">
+                        ❌ Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary"
+                            disabled="@(!IsDateValid())"
+                            @onclick="CreateGift">
+                        ➕ Create Gift
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<GiftMaster> allGifts = new();
+    private List<GiftMaster> filteredGifts = new();
+
+    private GiftMaster giftModel = CreateDefaultGift();
+
+    private bool isEditMode = false;
+    private string searchText = "";
+    private string sortColumn = "";
+    private bool sortAscending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGifts();
+    }
+
+    private static GiftMaster CreateDefaultGift()
+    {
+        return new GiftMaster
+        {
+            FromDate = DateTime.UtcNow.Date,
+            ToDate = DateTime.UtcNow.Date.AddDays(3),
+            IsActive = true
+        };
+    }
+
+    private async Task LoadGifts()
+    {
+        allGifts = (await GiftApi.GetAllAsync())?.ToList() ?? new();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredGifts = allGifts
+            .Where(g =>
+                string.IsNullOrWhiteSpace(searchText)
+                || g.Provider.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || g.PrizePoolText.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        ApplySorting();
+    }
+
+    private void SortBy(string column)
+    {
+        sortAscending = sortColumn == column ? !sortAscending : true;
+        sortColumn = column;
+        ApplySorting();
+    }
+
+    private void ApplySorting()
+    {
+        if (!string.IsNullOrEmpty(sortColumn))
+        {
+            filteredGifts = sortAscending
+                ? filteredGifts.OrderBy(g => g.GetType().GetProperty(sortColumn)?.GetValue(g)).ToList()
+                : filteredGifts.OrderByDescending(g => g.GetType().GetProperty(sortColumn)?.GetValue(g)).ToList();
+        }
+    }
+
+    private async Task CreateGift()
+    {
+        await GiftApi.CreateAsync(giftModel);
+        giftModel = CreateDefaultGift();
+        await LoadGifts();
+    }
+
+    private void EditGift(GiftMaster gift)
+    {
+        giftModel = new GiftMaster
+        {
+            Id = gift.Id,
+            Provider = gift.Provider,
+            PrizePoolText = gift.PrizePoolText,
+            WinnerText = gift.WinnerText,
+            CoinsRequired = gift.CoinsRequired,
+            TotalSlots = gift.TotalSlots,
+            RemainingSlots = gift.RemainingSlots,
+            Image = gift.Image,
+            FromDate = gift.FromDate.Date,
+            ToDate = gift.ToDate.Date,
+            IsActive = gift.IsActive
+        };
+
+        isEditMode = true;
+    }
+
+    private async Task UpdateGift()
+    {
+        await GiftApi.UpdateAsync(giftModel.Id, giftModel);
+        isEditMode = false;
+        giftModel = CreateDefaultGift();
+        await LoadGifts();
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        giftModel = CreateDefaultGift();
+    }
+
+    private async Task DeleteGift(int id)
+    {
+        await GiftApi.DeleteAsync(id);
+        await LoadGifts();
+    }
+
+    private bool IsDateValid()
+    {
+        return giftModel.ToDate.Date >= giftModel.FromDate.Date;
+    }
+
+    private string GetEndsText(DateTime toDate)
+    {
+        var days = (toDate.Date - DateTime.UtcNow.Date).Days;
+
+        if (days < 0) return "Ended";
+        if (days == 0) return "Ends today";
+        if (days == 1) return "Ends in 1 day";
+        return $"Ends in {days} days";
+    }
+
+    private string GetEndsBadge(DateTime toDate)
+    {
+        var days = (toDate.Date - DateTime.UtcNow.Date).Days;
+
+        if (days < 0) return "bg-danger";
+        if (days == 0) return "bg-warning";
+        return "bg-info";
+    }
+}

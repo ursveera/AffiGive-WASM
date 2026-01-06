@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AffiGive.SharedLib" Version="1.0.0" />
+    <ProjectReference Include="..\DAO\SharedLib\SharedLib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

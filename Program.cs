@@ -3,6 +3,7 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using WASM;
+using WASM.api;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -46,5 +47,6 @@ builder.Services.AddScoped<IEntryApiGateway, EntryApiGateway>();
 builder.Services.AddScoped<IWinnerApiGateway, WinnerApiGateway>();
 builder.Services.AddScoped<IAppSettingsApi, AppSettingsApi>();
 builder.Services.AddScoped<ITaskApiGateway, TaskApiGateway>();
+builder.Services.AddScoped<IGiftApi, GiftApi>();
 
 await builder.Build().RunAsync();
