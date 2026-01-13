@@ -9,36 +9,61 @@ namespace WASM.api
     public class AccountDeleteRequestApi : IAccountDeleteRequestApi
     {
         private readonly HttpClient _http;
-        private const string BASE = "Gift";
+        private const string BASE = "AccountDeletionRequests";
 
-        public Task<List<AccountDeletionRequest>> GetAllAsync()
+        public AccountDeleteRequestApi(HttpClient http)
         {
-            throw new NotImplementedException();
+            _http = http;
         }
 
-        public Task<AccountDeletionRequest?> GetByIdAsync(int id)
+        // 🔐 Admin – get all requests
+        public async Task<List<AccountDeletionRequest>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _http.GetFromJsonAsync<List<AccountDeletionRequest>>(BASE);
         }
 
-        public Task CreateAsync(AccountDeletionRequest request)
+        // 🔐 Admin – get request by id
+        public async Task<AccountDeletionRequest?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _http.GetFromJsonAsync<AccountDeletionRequest>($"{BASE}/{id}");
         }
 
-        public Task UpdateStatusAsync(int id, string status, string? remarks)
+        // 👤 User – create delete request
+        public async Task CreateAsync(AccountDeletionRequest request)
         {
-            throw new NotImplementedException();
+            var response = await _http.PostAsJsonAsync(BASE, request);
+            response.EnsureSuccessStatusCode();
         }
 
-        public Task DeleteAsync(int id)
+        // 🔐 Admin – approve / reject / revert
+        public async Task UpdateStatusAsync(int id, string status, string? remarks)
         {
-            throw new NotImplementedException();
+            var response = await _http.PutAsJsonAsync(
+                $"{BASE}/{id}/status?status={status}",
+                remarks
+            );
+
+            response.EnsureSuccessStatusCode();
         }
 
-        public Task<bool> HasPendingRequestAsync(string googleId)
+        // 🔐 Admin – finalize delete (soft delete → Status = Deleted)
+        public async Task DeleteAsync(int id)
         {
-            throw new NotImplementedException();
+            var response = await _http.DeleteAsync($"{BASE}/{id}");
+            response.EnsureSuccessStatusCode();
+        }
+
+        // 👤 User – check if already requested deletion
+        public async Task<bool> HasPendingRequestAsync()
+        {
+            var response = await _http.GetFromJsonAsync<ApiBoolResponse>($"{BASE}/hasActive");
+            return response?.Value ?? false;
+        }
+
+        // 🔹 helper DTO
+        private class ApiBoolResponse
+        {
+            public bool Value { get; set; }
         }
     }
 }

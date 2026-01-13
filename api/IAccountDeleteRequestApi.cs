@@ -9,6 +9,6 @@ namespace WASM.api
         Task CreateAsync(AccountDeletionRequest request);
         Task UpdateStatusAsync(int id, string status, string? remarks);
         Task DeleteAsync(int id);
-        Task<bool> HasPendingRequestAsync(string googleId);
+        Task<bool> HasPendingRequestAsync();
     }
 }

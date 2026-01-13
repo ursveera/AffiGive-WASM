@@ -1,7 +1,5 @@
 ﻿using SharedLib.Models;
 using System.Net.Http.Json;
-using WASM.DTO;
-using WASM.Pages;
 
 namespace WASM.api
 {
