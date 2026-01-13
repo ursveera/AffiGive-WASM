@@ -4,10 +4,4 @@
     <ActiveDebugProfile>https</ActiveDebugProfile>
     <NameOfLastUsedPublishProfile>F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\WASM\Properties\PublishProfiles\vcwgamestudio-002-site2 - Web Deploy.pubxml</NameOfLastUsedPublishProfile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
-  </PropertyGroup>
 </Project>
