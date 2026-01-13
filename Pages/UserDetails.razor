@@ -1,0 +1,172 @@
+﻿@page "/admin/users/{UserId}"
+@using AffiGive_API_V1.Models
+@using SharedLib.DTO
+@using SharedLib.Models
+@using WASM.api
+@inject IUserApi UserApi
+@inject NavigationManager Nav
+
+<h3 class="mb-3">👤 User Details</h3>
+
+@if (user == null)
+{
+    <p class="text-muted">Loading user...</p>
+}
+else
+{
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                @if (!string.IsNullOrWhiteSpace(user?.ProfileImage))
+                {
+                    <a href="@user.ProfileImage" target="_blank" rel="noopener noreferrer">
+                        <img src="@user.ProfileImage"
+                             referrerpolicy="no-referrer"
+                             class="rounded-circle me-3"
+                             style="width:64px;height:64px" />
+                    </a>
+                }
+
+                <div>
+                    <h5 class="mb-1">@user.Name</h5>
+                    <div class="text-muted">@user.Email</div>
+                    <div class="mt-1">
+                        <span class="badge bg-success">
+                            💰 @totalCoins Coins
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-secondary mt-3" @onclick="GoBack">
+        🔙 Back
+    </button>
+}
+
+<h5>🪙 Coin History</h5>
+@if (coinHistory != null && coinHistory.Any())
+{
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <strong>Group by:</strong>
+
+                <button class="btn btn-sm @(selectedSource == null ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => FilterBySource(null)">
+                    All
+                </button>
+
+                @foreach (var source in coinHistory.Select(x => x.Source).Distinct())
+                {
+                    <button class="btn btn-sm @(selectedSource == source ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => FilterBySource(source)">
+                        @source
+                    </button>
+                }
+            </div>
+
+            <!-- 🔥 TOTAL COINS DISPLAY -->
+            <div>
+                <span class="badge bg-success fs-6">
+                    🪙 Total Coins: @groupedTotalCoins
+                </span>
+            </div>
+
+        </div>
+    </div>
+}
+@if (coinHistory == null)
+{
+    <p class="text-muted">Loading coin history...</p>
+}
+else if (!coinHistory.Any())
+{
+    <div class="alert alert-warning">
+        No coin history found.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Coins</th>
+                        <th>Source</th>
+                        <th>Reference</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (c, i) in filteredCoinHistory!.Select((v, i) => (v, i + 1)))
+                    {
+                        <tr>
+                            <td>@i</td>
+                            <td>
+                                <span class="badge @(c.Coins > 0 ? "bg-success" : "bg-danger")">
+                                    @c.Coins
+                                </span>
+                            </td>
+                            <td>@c.Source</td>
+                            <td>@c.ReferenceDate?.ToString("dd MMM yyyy")</td>
+                            <td>@c.CreatedAt.ToString("dd MMM yyyy hh:mm:ss tt")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+
+
+@code {
+    [Parameter] public string UserId { get; set; } = null!;
+    private int giftId;
+    private User? user;
+    private int totalCoins;
+    private List<CoinHistoryDto>? coinHistory;
+    private string? selectedSource;
+    private List<CoinHistoryDto>? filteredCoinHistory;
+    private int groupedTotalCoins;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        if (int.TryParse(query["giftId"], out var id))
+        {
+            giftId = id;
+        }
+
+        user = await UserApi.GetByUserId(UserId);
+        totalCoins = await UserApi.GetUserTotalCoinsAsync(UserId);
+        coinHistory = await UserApi.GetUserCoinHistoryAsync(UserId);
+        coinHistory = await UserApi.GetUserCoinHistoryAsync(UserId);
+        filteredCoinHistory = coinHistory;
+        groupedTotalCoins = coinHistory.Sum(x => x.Coins);
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo($"/admin/gifts/{giftId}/participants");
+    }
+    private void FilterBySource(string? source)
+    {
+        selectedSource = source;
+
+        filteredCoinHistory = string.IsNullOrEmpty(source)
+            ? coinHistory
+            : coinHistory?
+                .Where(x => x.Source == source)
+                .ToList();
+
+        groupedTotalCoins = filteredCoinHistory?.Sum(x => x.Coins) ?? 0;
+    }
+}
+
