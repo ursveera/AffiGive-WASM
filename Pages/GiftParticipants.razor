@@ -1,0 +1,87 @@
+﻿@page "/admin/participants"
+@page "/admin/gifts/{GiftId:int}/participants"
+
+@using SharedLib.Models
+@using WASM.api
+@inject IGiftApi GiftApi
+@inject NavigationManager Nav
+
+<h3 class="mb-3">👥 Gift Participants</h3>
+
+@if (participants == null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!participants.Any())
+{
+    <div class="alert alert-warning">
+        No users joined this gift yet.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>User ID</th>
+                        <th>Joined At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (item, index) in participants.Select((v, i) => (v, i + 1)))
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>
+                                <button class="btn btn-link p-0"
+                                        @onclick="() => OpenUser(item.UserId, GiftId)">
+                                    @item.UserId
+                                </button>
+                            </td>
+                            <td>@item.JoinedAt.ToString("dd MMM yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<button class="btn btn-secondary mt-3" @onclick="GoBack">
+    🔙 Back
+</button>
+
+@code {
+    [Parameter] public int? GiftId { get; set; }
+
+    private List<GiftParticipation>? participants;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (GiftId.HasValue)
+        {
+            // 🎁 Gift-specific participants
+            participants = await GiftApi.GetParticipantsByGiftIdAsync(GiftId.Value);
+        }
+        else
+        {
+            // 👥 All participants (navbar usage)
+            participants = await GiftApi.GetAllParticipantsAsync();
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/admin/gifts");
+    }
+    private void OpenUser(string userId, int? giftId)
+    {
+        if (giftId!=null)
+            Nav.NavigateTo($"/admin/users/{userId}?giftId={giftId}");
+        else
+            Nav.NavigateTo($"/admin/users/{userId}");
+    }
+}

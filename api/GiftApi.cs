@@ -1,6 +1,7 @@
 ﻿using SharedLib.Models;
 using System.Net.Http.Json;
 using WASM.DTO;
+using WASM.Pages;
 
 namespace WASM.api
 {
@@ -16,7 +17,7 @@ namespace WASM.api
 
         public async Task<IEnumerable<GiftMaster>> GetAllAsync()
         {
-            return await _http.GetFromJsonAsync<IEnumerable<GiftMaster>>(BASE)
+            return await _http.GetFromJsonAsync<IEnumerable<GiftMaster>>($"{BASE}/getallGiftsForAdmin")
                        ?? Enumerable.Empty<GiftMaster>();
         }
 
@@ -44,6 +45,18 @@ namespace WASM.api
         {
             var response = await _http.DeleteAsync($"{BASE}/{id}");
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task<List<GiftParticipation>> GetParticipantsByGiftIdAsync(int giftId)
+        {
+            return await _http.GetFromJsonAsync<List<GiftParticipation>>(
+                $"{BASE}/participants/{giftId}"
+            ) ?? new List<GiftParticipation>();
+        }
+
+        public async Task<List<GiftParticipation>> GetAllParticipantsAsync()
+        {
+            return await _http.GetFromJsonAsync<List<GiftParticipation>>($"{BASE}/participants") ?? new List<GiftParticipation>();
         }
     }
 }

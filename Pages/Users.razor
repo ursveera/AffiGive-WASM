@@ -1,0 +1,63 @@
+﻿@page "/admin/users"
+@using AffiGive_API_V1.Models
+@using WASM.api
+@inject IUserApi UserApi
+@inject NavigationManager Nav
+
+<h3 class="mb-3">👥 Users</h3>
+
+@if (users == null)
+{
+    <p class="text-muted">Loading users...</p>
+}
+else if (!users.Any())
+{
+    <div class="alert alert-warning">No users found.</div>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (u, i) in users.Select((v, i) => (v, i + 1)))
+                    {
+                        <tr>
+                            <td>@i</td>
+                            <td>
+                                <button class="btn btn-link p-0"
+                                        @onclick="() => OpenUser(u.Id.ToString())">
+                                    @u.Name
+                                </button>
+                            </td>
+                            <td>@u.Email</td>
+                            <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private List<User>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserApi.GetAllUsersAsync();
+    }
+
+    private void OpenUser(string userId)
+    {
+        Nav.NavigateTo($"/admin/users/{userId}");
+    }
+}

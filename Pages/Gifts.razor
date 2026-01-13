@@ -2,6 +2,7 @@
 @using SharedLib.Models
 @using WASM.api
 @inject IGiftApi GiftApi
+@inject NavigationManager Nav
 
 <h3 class="mb-3">🎁 Gift Manager</h3>
 
@@ -89,6 +90,10 @@
                             </td>
 
                             <td class="text-end">
+                                <button class="btn btn-outline-info btn-sm me-1"
+                                        @onclick="() => ViewParticipants(gift.Id)">
+                                    👥 Joined
+                                </button>
                                 <button class="btn btn-outline-primary btn-sm me-1"
                                         @onclick="() => EditGift(gift)">
                                     ✏️ Edit
@@ -117,7 +122,12 @@
 
             <div class="col-md-4">
                 <label class="form-label">Provider</label>
-                <input class="form-control" @bind="giftModel.Provider" />
+                <input class="form-control" @bind="giftModel.Provider" @ref="providerInput" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Prize Pool Amount</label>
+                <input class="form-control" @bind="giftModel.WinnerPrizeAmount" />
             </div>
 
             <div class="col-md-4">
@@ -125,6 +135,10 @@
                 <input class="form-control" @bind="giftModel.PrizePoolText" />
             </div>
 
+            <div class="col-md-4">
+                <label class="form-label">Winners Count</label>
+                <input class="form-control" @bind="giftModel.WinnerCount" />
+            </div>
             <div class="col-md-4">
                 <label class="form-label">Winner Text</label>
                 <input class="form-control" @bind="giftModel.WinnerText" />
@@ -166,9 +180,13 @@
                 <input class="form-control" @bind="giftModel.Image" />
             </div>
 
-            <div class="col-md-4 d-flex align-items-center">
-                <label class="me-3">Active</label>
-                <input type="checkbox" @bind="giftModel.IsActive" />
+
+            <div class="col-md-4 d-flex align-items-center mt-3">
+                <label class="form-label fw-semibold me-3">Valid</label>
+                <label class="switch">
+                    <input type="checkbox" @bind="giftModel.IsActive">
+                    <span class="slider round"></span>
+                </label>
             </div>
 
             <div class="col-12 mt-3">
@@ -216,7 +234,8 @@
     private string searchText = "";
     private string sortColumn = "";
     private bool sortAscending = true;
-
+    private ElementReference providerInput;
+    private bool focusProviderAfterEdit;
     protected override async Task OnInitializedAsync()
     {
         await LoadGifts();
@@ -230,6 +249,14 @@
             ToDate = DateTime.UtcNow.Date.AddDays(3),
             IsActive = true
         };
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusProviderAfterEdit)
+        {
+            focusProviderAfterEdit = false;
+            await providerInput.FocusAsync();
+        }
     }
 
     private async Task LoadGifts()
@@ -288,10 +315,13 @@
             Image = gift.Image,
             FromDate = gift.FromDate.Date,
             ToDate = gift.ToDate.Date,
-            IsActive = gift.IsActive
+            IsActive = gift.IsActive,
+            WinnerCount = gift.WinnerCount,
+            WinnerPrizeAmount = gift.WinnerPrizeAmount
         };
 
         isEditMode = true;
+        focusProviderAfterEdit = true;
     }
 
     private async Task UpdateGift()
@@ -337,4 +367,79 @@
         if (days == 0) return "bg-warning";
         return "bg-info";
     }
+    private void ViewParticipants(int giftId)
+    {
+        Nav.NavigateTo($"/admin/gifts/{giftId}/participants");
+    }
 }
+
+<style>
+    .modern-input {
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        transition: 0.25s;
+    }
+
+        .modern-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.15rem rgba(13,110,253,0.25);
+        }
+
+    .modern-btn {
+        border-radius: 8px;
+        transition: .2s;
+    }
+
+        .modern-btn:hover {
+            transform: scale(1.08);
+        }
+
+    .table-row-modern:hover {
+        background-color: #eef3ff !important;
+        transition: .2s;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+
+        .switch input {
+            display: none;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #ccc;
+        border-radius: 34px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: .4s;
+    }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+    input:checked + .slider {
+        background-color: #0d6efd;
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+</style>

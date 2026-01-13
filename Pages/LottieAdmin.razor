@@ -1,0 +1,273 @@
+﻿@page "/admin/lottie"
+@using SharedLib.DTO
+@using WASM.api
+@inject IAdminLottieApi LottieApi
+
+<h3 class="mb-3">🎞 Lottie Manager</h3>
+
+<!-- SEARCH -->
+<input class="form-control mb-3"
+       placeholder="Search by JSON URL..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+<!-- LIST -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        Lottie List
+    </div>
+
+    <div class="table-responsive" style="max-height: 400px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light position-sticky top-0">
+                <tr>
+                    <th>ID</th>
+                    <th>JSON URL</th>
+                    <th>Active</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!filtered.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            🚫 No Lottie animations found
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in filtered)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+
+                            <td class="text-truncate" style="max-width:420px">
+                                @item.JsonUrl
+                            </td>
+
+                            <td>
+                                <span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(item.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => Edit(item)">
+                                    ✏️ Edit
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm"
+                                        @onclick="() => AskDelete(item.Id)">
+                                    🗑 Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+@if (deleteId.HasValue)
+{
+    <div class="alert alert-warning mt-3 d-flex justify-content-between align-items-center">
+        <span>⚠️ Are you sure you want to delete this Lottie?</span>
+
+        <div>
+            <button class="btn btn-danger btn-sm me-2"
+                    @onclick="ConfirmDelete">
+                Yes, Delete
+            </button>
+
+            <button class="btn btn-secondary btn-sm"
+                    @onclick="CancelDelete">
+                Cancel
+            </button>
+        </div>
+    </div>
+}
+
+<!-- CREATE / EDIT -->
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEdit ? "✏️ Edit Lottie" : "➕ Create Lottie")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-10">
+                <label class="form-label">Lottie JSON URL</label>
+                <input class="form-control"
+                       @bind="model.JsonUrl"
+                       placeholder="https://..." />
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <label class="switch">
+                    <input type="checkbox" @bind="model.IsActive" />
+                    <span class="slider round"></span>
+                </label>
+                <span class="ms-2">Active</span>
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (isEdit)
+                {
+                    <button class="btn btn-warning me-2"
+                            @onclick="Update">
+                        💾 Update
+                    </button>
+
+                    <button class="btn btn-secondary"
+                            @onclick="CancelEdit">
+                        ❌ Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary"
+                            @onclick="Create">
+                        ➕ Create
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+
+        .switch input {
+            display: none;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #ccc;
+        border-radius: 34px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: .4s;
+    }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+    input:checked + .slider {
+        background-color: #0d6efd;
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+</style>
+
+@code {
+
+    private List<LottieDto> all = new();
+    private List<LottieDto> filtered = new();
+
+    private LottieDto model = NewModel();
+    private bool isEdit;
+    private string searchText = "";
+
+    private int? deleteId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private static LottieDto NewModel() =>
+        new() { IsActive = true };
+
+    private async Task Load()
+    {
+        all = await LottieApi.GetAll() ?? new();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filtered = all
+            .Where(x =>
+                string.IsNullOrWhiteSpace(searchText) ||
+                x.JsonUrl.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task Create()
+    {
+        await LottieApi.Add(model);
+        model = NewModel();
+        await Load();
+    }
+
+    private void Edit(LottieDto item)
+    {
+        model = new LottieDto
+        {
+            Id = item.Id,
+            JsonUrl = item.JsonUrl,
+            IsActive = item.IsActive
+        };
+        isEdit = true;
+    }
+
+    private async Task Update()
+    {
+        await LottieApi.Update(model);
+        CancelEdit();
+        await Load();
+    }
+
+    private void AskDelete(int id)
+    {
+        deleteId = id;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (!deleteId.HasValue) return;
+
+        await LottieApi.DeleteById(deleteId.Value);
+        deleteId = null;
+        await Load();
+    }
+
+    private void CancelDelete()
+    {
+        deleteId = null;
+    }
+
+    private void CancelEdit()
+    {
+        isEdit = false;
+        model = NewModel();
+    }
+}

@@ -9,5 +9,7 @@ namespace WASM.api
         Task<int> CreateAsync(GiftMaster gift);
         Task<bool> UpdateAsync(int id, GiftMaster gift);
         Task<bool> DeleteAsync(int id);
+        Task<List<GiftParticipation>> GetParticipantsByGiftIdAsync(int giftId);
+        Task<List<GiftParticipation>> GetAllParticipantsAsync();
     }
 }

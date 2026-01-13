@@ -1,0 +1,215 @@
+﻿@page "/admin/source-limits"
+@using SharedLib.Models
+@using WASM.api
+@inject ISourceLimitApi Api
+
+<h3 class="mb-3">⚙️ Source Limits</h3>
+
+<input class="form-control mb-3"
+       placeholder="Search source..."
+       value="@searchText"
+       @oninput="e => OnSearch(e.Value?.ToString())" />
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        Source Limits
+    </div>
+
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Source</th>
+                <th>Type</th>
+                <th>Limit</th>
+                <th>Active</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!filtered.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        🚫 No records
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in filtered)
+                {
+                    <tr>
+                        <td><span class="badge bg-primary">@item.Source</span></td>
+                        <td>
+                            <span class="badge @(item.LimitType == "COUNT" ? "bg-info" : "bg-success")">
+                                @item.LimitType
+                            </span>
+                        </td>
+                        <td>@item.DailyLimit</td>
+                        <td>
+                            <span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">
+                                @(item.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-outline-primary btn-sm me-2"
+                                    @onclick="() => Edit(item)">
+                                ✏️ Edit
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    @onclick="() => Delete(item.Source)">
+                                🗑 Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEditMode ? "✏️ Edit Source Limit" : "➕ Create Source Limit")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label">Source</label>
+                <input class="form-control" @bind="model.Source" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Limit Type</label>
+                <select class="form-select" @bind="model.LimitType">
+                    <option value="COUNT">COUNT</option>
+                    <option value="COINS">COINS</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Daily Limit</label>
+                <input type="number" class="form-control" @bind="model.DailyLimit" />
+            </div>
+
+            <div class="col-md-4 d-flex align-items-center mt-3">
+                <label class="form-label fw-semibold me-3">Active</label>
+                <label class="switch">
+                    <input type="checkbox" @bind="model.IsActive">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (isEditMode)
+                {
+                    <button class="btn btn-warning me-2"
+                            @onclick="UpdateSourceLimit">
+                        💾 Update
+                    </button>
+
+                    <button class="btn btn-secondary"
+                            @onclick="CancelEdit">
+                        ❌ Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary"
+                            disabled="@string.IsNullOrWhiteSpace(model.Source)"
+                            @onclick="CreateSourceLimit">
+                        ➕ Create
+                    </button>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<SourceLimit> all = new();
+    private List<SourceLimit> filtered = new();
+
+    private SourceLimit model = NewModel();
+    private bool isEditMode = false;
+    private string searchText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private static SourceLimit NewModel() => new()
+    {
+        LimitType = "COUNT",
+        DailyLimit = 1,
+        IsActive = true
+    };
+
+    private async Task Load()
+    {
+        all = await Api.GetAllAsync();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filtered = all
+            .Where(x =>
+                string.IsNullOrWhiteSpace(searchText) ||
+                x.Source.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private void OnSearch(string? text)
+    {
+        searchText = text ?? "";
+        ApplyFilter();
+    }
+
+    private async Task CreateSourceLimit()
+    {
+        await Api.CreateAsync(model);
+        model = NewModel();
+        await Load();
+    }
+
+    private void Edit(SourceLimit item)
+    {
+        model = new SourceLimit
+        {
+            id = item.id,
+            Source = item.Source,
+            LimitType = item.LimitType,
+            DailyLimit = item.DailyLimit,
+            IsActive = item.IsActive
+        };
+
+        isEditMode = true;
+    }
+
+    private async Task UpdateSourceLimit()
+    {
+        await Api.UpdateAsync(model);
+        isEditMode = false;
+        model = NewModel();
+        await Load();
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        model = NewModel();
+    }
+
+    private async Task Delete(string source)
+    {
+        await Api.DeleteAsync(source);
+        await Load();
+    }
+}
