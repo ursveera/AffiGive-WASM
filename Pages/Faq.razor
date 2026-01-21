@@ -1,0 +1,205 @@
+﻿@page "/admin/faqs"
+@using WASM.api
+@inject IFaqApi FaqApi
+
+<h3 class="mb-3">❓ FAQ Manager</h3>
+
+<input class="form-control mb-3"
+       placeholder="Search question or answer..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        FAQ List
+    </div>
+
+    <div class="table-responsive" style="max-height: 420px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light position-sticky top-0">
+                <tr>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th>Active</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!filteredFaqs.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            🚫 No FAQs found
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var faq in filteredFaqs)
+                    {
+                        <tr>
+                            <td style="max-width:300px;">
+                                <strong>@faq.Question</strong>
+                            </td>
+
+                            <td style="max-width:450px;">
+                                @faq.Answer
+                            </td>
+
+                            <td>
+                                <span class="badge @(faq.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(faq.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => EditFaq(faq)">
+                                    ✏️ Edit
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm"
+                                        @onclick="() => DeleteFaq(faq.Id)">
+                                    🗑 Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEditMode ? "✏️ Edit FAQ" : "➕ Create FAQ")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-12">
+                <label class="form-label">Question</label>
+                <input class="form-control" @bind="faqModel.Question" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Answer</label>
+                <textarea class="form-control" rows="4"
+                          @bind="faqModel.Answer"></textarea>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-center mt-2">
+                <label class="form-label fw-semibold me-3">Active</label>
+                <label class="switch">
+                    <input type="checkbox" @bind="faqModel.IsActive">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="col-12 mt-3">
+                @if (isEditMode)
+                {
+                    <button class="btn btn-warning me-2"
+                            @onclick="UpdateFaq">
+                        💾 Update
+                    </button>
+
+                    <button class="btn btn-secondary"
+                            @onclick="CancelEdit">
+                        ❌ Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary"
+                            @onclick="CreateFaq">
+                        ➕ Create FAQ
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<SharedLib.Models.Faq> allFaqs = new();
+    private List<SharedLib.Models.Faq> filteredFaqs = new();
+
+    private SharedLib.Models.Faq faqModel = CreateDefaultFaq();
+    private bool isEditMode = false;
+    private string searchText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFaqs();
+    }
+
+    private static SharedLib.Models.Faq CreateDefaultFaq()
+    {
+        return new SharedLib.Models.Faq
+        {
+            IsActive = true
+        };
+    }
+
+    private async Task LoadFaqs()
+    {
+        var allFaq = await FaqApi.GetAllForAdminAsync();
+        allFaqs = allFaq.ToList();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredFaqs = allFaqs
+            .Where(f =>
+                string.IsNullOrWhiteSpace(searchText)
+                || f.Question.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || f.Answer.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task CreateFaq()
+    {
+        await FaqApi.CreateAsync(faqModel);
+        faqModel = CreateDefaultFaq();
+        await LoadFaqs();
+    }
+
+    private void EditFaq(SharedLib.Models.Faq faq)
+    {
+        faqModel = new SharedLib.Models.Faq
+        {
+            Id = faq.Id,
+            Question = faq.Question,
+            Answer = faq.Answer,
+            IsActive = faq.IsActive
+        };
+
+        isEditMode = true;
+    }
+
+    private async Task UpdateFaq()
+    {
+        await FaqApi.UpdateAsync(faqModel.Id, faqModel);
+        isEditMode = false;
+        faqModel = CreateDefaultFaq();
+        await LoadFaqs();
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        faqModel = CreateDefaultFaq();
+    }
+
+    private async Task DeleteFaq(int id)
+    {
+        await FaqApi.DeleteAsync(id);
+        await LoadFaqs();
+    }
+}

@@ -51,6 +51,7 @@
                     <th>User</th>
                     <th>Requested</th>
                     <th>Status</th>
+                    <th>⏳ Days Left</th>
                     <th>Processed</th>
                     <th>Admin Remarks</th>
                     <th class="text-end">Actions</th>
@@ -70,7 +71,7 @@
                 {
                     @foreach (var r in filtered)
                     {
-                        <tr class="@(r.Status == "Pending" ? "table-warning" : "")">
+                        <tr class="@(GetDaysRemaining(r.RequestTime) <= 7 && r.Status == "Pending" ? "table-danger" : "")">
 
                             <td>
                                 <div class="fw-semibold">@r.UserEmail</div>
@@ -83,6 +84,20 @@
                                 <span class="badge @GetStatusBadge(r.Status)">
                                     @r.Status
                                 </span>
+                            </td>
+                            <td>
+                                @if (r.Status == "Approved")
+                                {
+                                    <span class="badge bg-success">Completed</span>
+                                }
+                                else
+                                {
+                                    var daysLeft = GetDaysRemaining(r.RequestTime);
+
+                                    <span class="badge @(daysLeft <= 7 ? "bg-danger" : "bg-info")">
+                                        @daysLeft days
+                                    </span>
+                                }
                             </td>
 
                             <td>
@@ -168,7 +183,7 @@
                 (statusFilter == "All" || x.Status == statusFilter) &&
                 (string.IsNullOrWhiteSpace(searchText)
                  || (x.UserEmail?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-                 || (x.GoogleId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)))
+                 || (x.GoogleId.ToString()?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)))
             .OrderByDescending(x => x.RequestTime)
             .ToList();
     }
@@ -208,4 +223,12 @@
         "Rejected" => "bg-danger",
         _ => "bg-secondary"
     };
+    private const int TOTAL_DAYS = 90;
+
+    private int GetDaysRemaining(DateTime requestTime)
+    {
+        var daysPassed = (DateTime.UtcNow.Date - requestTime.Date).Days;
+        var remaining = TOTAL_DAYS - daysPassed;
+        return remaining < 0 ? 0 : remaining;
+    }
 }
