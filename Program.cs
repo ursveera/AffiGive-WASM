@@ -52,5 +52,6 @@ builder.Services.AddScoped<IUserApi, UserApi>();
 builder.Services.AddScoped<IAdminLottieApi, AdminLottieApi>();
 builder.Services.AddScoped<ISourceLimitApi, SourceLimitApi>();
 builder.Services.AddScoped<IAccountDeleteRequestApi, AccountDeleteRequestApi>();
+builder.Services.AddScoped<IFaqApi, FaqApi>();
 
 await builder.Build().RunAsync();
