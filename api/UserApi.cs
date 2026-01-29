@@ -54,5 +54,32 @@ namespace WASM.api
         {
             return await _http.GetFromJsonAsync<List<UserRankDto>>($"{BASE}/leaderboard") ?? new();
         }
+
+        public async Task LockMonthlyWinnersAsync(int year, int month, int top = 10)
+        {
+            var response = await _http.PostAsync(
+                $"{BASE}/leaderboard/lock?year={year}&month={month}&top={top}",
+                null
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to lock winners: {error}");
+            }
+        }
+
+        public async Task<List<UserRankDto>> GetMonthlyWinnersArrayAsync(int year, int month)
+        {
+            return await _http.GetFromJsonAsync<List<UserRankDto>>(
+                $"{BASE}/leaderboard/monthwisewinner?year={year}&month={month}"
+            ) ?? new();
+        }
+        public async Task<List<UserRankDto>> GetMonthlyWinnersAsync(int year, int month)
+        {
+            return await _http.GetFromJsonAsync<List<UserRankDto>>(
+                $"{BASE}/leaderboard/winners?year={year}&month={month}"
+            ) ?? new();
+        }
     }
 }

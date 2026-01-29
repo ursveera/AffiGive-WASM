@@ -15,10 +15,10 @@
 
             <thead class="table-light position-sticky top-0 shadow-sm" style="z-index:5;">
                 <tr>
-                    <th>Name</th>
+                   @*  <th>Name</th>
                     <th>Nickname</th>
                     <th>Email</th>
-                    <th>Phone</th>
+                    <th>Phone</th> *@
                     <th>Video Code</th>
                     <th>Valid</th>
                     <th style="width:150px;" class="text-end">Actions</th>
@@ -29,10 +29,10 @@
                 @foreach (var e in filteredEntries)
                 {
                     <tr class="table-row-modern">
-                        <td>@e.Name</td>
+                        @* <td>@e.Name</td>
                         <td>@e.NickName</td>
                         <td>@e.Email</td>
-                        <td>@e.Phone</td>
+                        <td>@e.Phone</td> *@
                         <td>@e.Code</td>
 
                         <td>
@@ -73,7 +73,7 @@
     <div class="card-body">
         <div class="row g-3">
 
-            <div class="col-md-4">
+            @* <div class="col-md-4">
                 <label class="form-label fw-semibold">Name</label>
                 <input class="form-control modern-input" @bind="entryModel.Name" />
             </div>
@@ -96,12 +96,12 @@
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Address</label>
                 <input class="form-control modern-input" @bind="entryModel.Address" />
-            </div>
+            </div>*@
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Video Code</label>
                 <input class="form-control modern-input" @bind="entryModel.Code" />
-            </div>
+            </div> 
 
             <div class="col-md-4 d-flex align-items-center mt-3">
                 <label class="form-label fw-semibold me-3">Valid</label>
@@ -170,7 +170,7 @@
     {
         filteredEntries = allEntries
             .Where(e =>
-                (string.IsNullOrWhiteSpace(searchNick) || e.NickName.Contains(searchNick, StringComparison.OrdinalIgnoreCase)) &&
+                // (string.IsNullOrWhiteSpace(searchNick) || e.NickName.Contains(searchNick, StringComparison.OrdinalIgnoreCase)) &&
                 (string.IsNullOrWhiteSpace(searchCode) || e.Code.Contains(searchCode, StringComparison.OrdinalIgnoreCase)) &&
                 (!showValidOnly || e.IsValid)
             )
@@ -194,11 +194,11 @@
         entryModel = new Entry
             {
                 Id = e.Id,
-                Name = e.Name,
-                NickName = e.NickName,
-                Email = e.Email,
-                Phone = e.Phone,
-                Address = e.Address,
+                // Name = e.Name,
+                // NickName = e.NickName,
+                // Email = e.Email,
+                // Phone = e.Phone,
+                // Address = e.Address,
                 Code = e.Code,
                 IsValid = e.IsValid,
                 CreatedAt = e.CreatedAt
@@ -212,11 +212,11 @@
         var existing = allEntries.FirstOrDefault(x => x.Id == entryModel.Id);
         if (existing != null)
         {
-            existing.Name = entryModel.Name;
-            existing.NickName = entryModel.NickName;
-            existing.Email = entryModel.Email;
-            existing.Phone = entryModel.Phone;
-            existing.Address = entryModel.Address;
+            // existing.Name = entryModel.Name;
+            // existing.NickName = entryModel.NickName;
+            // existing.Email = entryModel.Email;
+            // existing.Phone = entryModel.Phone;
+            // existing.Address = entryModel.Address;
             existing.Code = entryModel.Code;
             existing.IsValid = entryModel.IsValid;
         }

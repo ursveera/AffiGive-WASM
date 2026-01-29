@@ -1,5 +1,6 @@
 ﻿using AffiGive_API_V1.DTO;
 using AffiGive_API_V1.Models;
+using System.Net;
 using System.Net.Http.Json;
 
 namespace AffigiveUIBalzor.api
@@ -83,6 +84,41 @@ namespace AffigiveUIBalzor.api
         {
             var response = await _httpClient.DeleteAsync(
                 $"{_endpoint}/{id}/DeleteById"
+            );
+
+            return response.IsSuccessStatusCode;
+        }
+        public async Task<Video?> GetActiveLuckyGiftVideo()
+        {
+            var response = await _httpClient.GetAsync(
+                $"{_endpoint}/GetLuckyGiftVideo"
+            );
+
+            // ✅ EXPECTED CASE: 404 → no active lucky video
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                // optional: read message, log it
+                return null;
+            }
+
+            // ❌ UNEXPECTED SERVER ERROR
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Server error: {(int)response.StatusCode}");
+            }
+
+            // ✅ SUCCESS
+            return await response.Content.ReadFromJsonAsync<Video>();
+        }
+
+
+        // PICK (SET) ACTIVE LUCKY GIFT VIDEO
+        public async Task<bool> PickLuckyGiftVideo(Guid videoId)
+        {
+            var response = await _httpClient.PostAsync(
+                $"{_endpoint}/{videoId}/PickLuckyGiftVideo",
+                null
             );
 
             return response.IsSuccessStatusCode;

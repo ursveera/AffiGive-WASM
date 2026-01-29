@@ -1,5 +1,6 @@
 ﻿using AffiGive_API_V1.Models;
 using SharedLib.DTO;
+using System.Threading.Tasks;
 
 namespace WASM.api
 {
@@ -11,5 +12,8 @@ namespace WASM.api
         Task<List<CoinHistoryDto>> GetUserCoinHistoryAsync(string userId);
         Task<List<User>> GetAllUsersAsync();
         Task<List<UserRankDto>> GetTopUserRanksAsync(int top = 10);
+        Task<List<UserRankDto>> GetMonthlyWinnersAsync(int year, int month);
+        Task LockMonthlyWinnersAsync(int year, int month, int top = 10);
+        Task<List<UserRankDto>> GetMonthlyWinnersArrayAsync(int year, int month);
     }
 }

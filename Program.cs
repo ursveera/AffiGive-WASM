@@ -6,7 +6,6 @@ using WASM;
 using WASM.api;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
 builder.RootComponents.Add<App>("#app");
 
 var baseUrl = builder.Configuration["ApiSettings:BaseUrl"];
@@ -27,6 +26,7 @@ builder.Services.AddScoped<AuthMessageHandler>();
 builder.Services.AddHttpClient("AuthClient", client =>
 {
     client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("X-Internal-Token", "MySecretInternalString");
 });
 
 // 🔹 HttpClient WITH JWT handler (for all APIs)
@@ -53,5 +53,6 @@ builder.Services.AddScoped<IAdminLottieApi, AdminLottieApi>();
 builder.Services.AddScoped<ISourceLimitApi, SourceLimitApi>();
 builder.Services.AddScoped<IAccountDeleteRequestApi, AccountDeleteRequestApi>();
 builder.Services.AddScoped<IFaqApi, FaqApi>();
+builder.Services.AddScoped<ISupportApi, SupportApi>();
 
 await builder.Build().RunAsync();

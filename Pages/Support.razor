@@ -1,0 +1,107 @@
+﻿@page "/admin/support"
+@using SharedLib.Models
+@using WASM.api
+@inject ISupportApi SupportApi
+
+<h3 class="mb-3">💬 Support Manager</h3>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">Users</div>
+
+            <ul class="list-group list-group-flush"
+                style="max-height:500px;overflow-y:auto;">
+                @foreach (var u in userList)
+                {
+                    <li class="list-group-item list-group-item-action
+                            @(selectedUser == u ? "active" : "")"
+                        @onclick="() => SelectUser(u)">
+                        👤 @u
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        @if (selectedUser == null)
+        {
+            <div class="alert alert-info">
+                Select a user to view conversation
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">
+                    Conversation – @selectedUser
+                </div>
+
+                <div class="card-body"
+                     style="max-height:420px;overflow-y:auto;">
+                    @foreach (var msg in messages)
+                    {
+                        <div class="mb-2 text-@(msg.IsFromUser ? "start" : "end")">
+                            <span class="badge @(msg.IsFromUser ? "bg-secondary" : "bg-primary")">
+                                @(msg.IsFromUser ? "User" : "Admin")
+                            </span>
+                            <div class="mt-1 p-2 rounded
+                                        @(msg.IsFromUser ? "bg-light" : "bg-primary text-white")">
+                                @msg.Message
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer d-flex">
+                    <input class="form-control me-2"
+                           placeholder="Type reply..."
+                           @bind="replyText"
+                           @bind:event="oninput" />
+
+                    <button class="btn btn-primary"
+                            @onclick="SendReply">
+                        Send
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+
+    private List<SupportMessage> allMessages = new();
+    private List<SupportMessage> messages = new();
+    private List<string> userList = new();
+
+    private string? selectedUser;
+    private string replyText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        allMessages = await SupportApi.GetAllMessagesAsync();
+
+        userList = allMessages
+            .Select(x => x.UserId)
+            .Distinct()
+            .ToList();
+    }
+
+    private async Task SelectUser(string userId)
+    {
+        selectedUser = userId;
+        messages = await SupportApi.GetMessagesByUserAsync(userId);
+    }
+
+    private async Task SendReply()
+    {
+        if (string.IsNullOrWhiteSpace(replyText) || selectedUser == null)
+            return;
+
+        var msg = await SupportApi.SendAdminReplyAsync(selectedUser, replyText);
+        messages.Add(msg);
+        replyText = "";
+    }
+}
