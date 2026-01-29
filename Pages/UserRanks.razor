@@ -3,15 +3,58 @@
 @using WASM.api
 @inject IUserApi UserApi
 
-<h3 class="mb-3">🏆 User Rankings</h3>
+<h3 class="mb-3">🏆 User Rankings (Admin)</h3>
+
+<div class="card mb-3 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Year</label>
+            <input type="number"
+                   class="form-control"
+                   @bind="selectedYear"
+                   @bind:event="onchange"
+                   @bind:after="LoadBySelectedMonth" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <select class="form-select"
+                    @bind="selectedMonth"
+                    @bind:event="onchange"
+                    @bind:after="LoadBySelectedMonth">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m">@MonthNames[m - 1]</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-6 text-end">
+            <button class="btn btn-primary me-2"
+                    @onclick="LoadCurrentMonth">
+                🔄 Load Current Month
+            </button>
+
+            <button class="btn btn-danger"
+                    disabled="@isLocked"
+                    @onclick="LockWinners">
+                🔒 Lock Winners
+            </button>
+        </div>
+    </div>
+
+    <small class="text-muted d-block mt-2">
+        @statusText
+    </small>
+</div>
 
 @if (ranks == null)
 {
-    <p class="text-muted">Loading leaderboard...</p>
+    <p class="text-muted">Loading...</p>
 }
 else if (!ranks.Any())
 {
-    <div class="alert alert-warning">No ranking data available.</div>
+    <div class="alert alert-warning">No data available.</div>
 }
 else
 {
@@ -24,7 +67,6 @@ else
                         <th>User</th>
                         <th>Email</th>
                         <th>Coins</th>
-                        <th>Title</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,7 +99,7 @@ else
                                         <img src="@r.ProfileImage"
                                              class="rounded-circle me-2"
                                              style="width:40px;height:40px"
-                                             onerror="this.src='/images/avatar.png'" />
+                                             />
                                     }
                                     <strong>@r.Name</strong>
                                 </div>
@@ -77,11 +119,87 @@ else
         </div>
     </div>
 }
+
 @code {
+
+    // -------------------------
+    // DATA
+    // -------------------------
+
     private List<UserRankDto>? ranks;
+
+    private int selectedYear = DateTime.Now.Year;
+    private int selectedMonth = DateTime.Now.Month;
+
+    private bool isLocked;
+    private string statusText = "";
+
+    // Month names (Razor-safe)
+    private static readonly string[] MonthNames =
+        System.Globalization.CultureInfo
+            .CurrentCulture
+            .DateTimeFormat
+            .MonthNames;
+
+    // -------------------------
+    // LIFECYCLE
+    // -------------------------
 
     protected override async Task OnInitializedAsync()
     {
-        ranks = await UserApi.GetTopUserRanksAsync();
+        await LoadBySelectedMonth();
+    }
+
+    // -------------------------
+    // CORE LOGIC
+    // -------------------------
+
+    private async Task LoadBySelectedMonth()
+    {
+        var now = DateTime.Now;
+
+        bool isCurrentMonth =
+            selectedYear == now.Year &&
+            selectedMonth == now.Month;
+
+        if (isCurrentMonth)
+        {
+            // Live leaderboard
+            ranks = await UserApi.GetTopUserRanksAsync();
+            isLocked = false;
+            statusText = "Live leaderboard (refresh-based, not real-time)";
+        }
+        else
+        {
+            // Locked winners
+            ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
+            isLocked = true;
+            statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
+        }
+    }
+
+    private async Task LoadCurrentMonth()
+    {
+        selectedYear = DateTime.Now.Year;
+        selectedMonth = DateTime.Now.Month;
+        await LoadBySelectedMonth();
+    }
+
+    private async Task LockWinners()
+    {
+        if (!await ConfirmAsync())
+            return;
+
+        await UserApi.LockMonthlyWinnersAsync(selectedYear, selectedMonth, 10);
+
+        ranks = await UserApi.GetMonthlyWinnersAsync(selectedYear, selectedMonth);
+        isLocked = true;
+        statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
+    }
+
+    private async Task<bool> ConfirmAsync()
+    {
+        // Replace with modal if needed
+        return await Task.FromResult(true);
     }
 }

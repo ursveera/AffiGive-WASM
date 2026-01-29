@@ -1,4 +1,5 @@
-﻿using SharedLib.Models;
+﻿using SharedLib.DTO;
+using SharedLib.Models;
 
 namespace WASM.api
 {
@@ -9,7 +10,11 @@ namespace WASM.api
         Task<int> CreateAsync(GiftMaster gift);
         Task<bool> UpdateAsync(int id, GiftMaster gift);
         Task<bool> DeleteAsync(int id);
+        Task<bool> ForceDeleteAsync(int id);
         Task<List<GiftParticipation>> GetParticipantsByGiftIdAsync(int giftId);
         Task<List<GiftParticipation>> GetAllParticipantsAsync();
+        Task LockGiftWinnersAsync(int giftId);
+        Task<List<GiftWinner>> GetWinnersAsync(int giftId);
+        Task<List<GiftWinnerDto>> GetWinnersWithUserAsync(int giftId);
     }
 }
