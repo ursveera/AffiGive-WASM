@@ -35,11 +35,20 @@
                 🔄 Load Current Month
             </button>
 
-            <button class="btn btn-danger"
-                    disabled="@isLocked"
-                    @onclick="LockWinners">
-                🔒 Lock Winners
-            </button>
+            @if (!isLocked)
+            {
+                <button class="btn btn-danger"
+                        @onclick="LockWinners">
+                    🔒 Lock Winners
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-warning"
+                        @onclick="UnlockWinners">
+                    🔓 Unlock Winners
+                </button>
+            }
         </div>
     </div>
 
@@ -156,26 +165,46 @@ else
 
     private async Task LoadBySelectedMonth()
     {
-        var now = DateTime.Now;
+        // var now = DateTime.Now;
 
-        bool isCurrentMonth =
-            selectedYear == now.Year &&
-            selectedMonth == now.Month;
+        // bool isCurrentMonth =
+        //     selectedYear == now.Year &&
+        //     selectedMonth == now.Month;
 
-        if (isCurrentMonth)
+        // if (isCurrentMonth)
+        // {
+        //     // Live leaderboard
+        //     ranks = await UserApi.GetTopUserRanksAsync();
+        //     isLocked = false;
+        //     statusText = "Live leaderboard (refresh-based, not real-time)";
+        // }
+        // else
+        // {
+        //     // Locked winners
+        //     ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
+        //     isLocked = true;
+        //     statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
+        // }
+        isLocked = await UserApi.IsMonthLockedAsync(selectedYear, selectedMonth);
+
+        if (isLocked)
         {
-            // Live leaderboard
-            ranks = await UserApi.GetTopUserRanksAsync();
-            isLocked = false;
-            statusText = "Live leaderboard (refresh-based, not real-time)";
+            ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
+            statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
         }
         else
         {
-            // Locked winners
-            ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
-            isLocked = true;
-            statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
+            ranks = await UserApi.GetTopUserRanksAsync();
+            statusText = "Live leaderboard (not locked)";
         }
+    }
+    private async Task UnlockWinners()
+    {
+        if (!await ConfirmAsync())
+            return;
+
+        await UserApi.UnlockMonthlyWinnersAsync(selectedYear, selectedMonth);
+        await LoadBySelectedMonth();
     }
 
     private async Task LoadCurrentMonth()
@@ -192,7 +221,7 @@ else
 
         await UserApi.LockMonthlyWinnersAsync(selectedYear, selectedMonth, 10);
 
-        ranks = await UserApi.GetMonthlyWinnersAsync(selectedYear, selectedMonth);
+        ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
         isLocked = true;
         statusText = $"🔒 Winners locked for {MonthNames[selectedMonth - 1]} {selectedYear}";
     }

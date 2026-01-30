@@ -69,6 +69,14 @@ namespace WASM.api
             var res = await _http.PostAsync($"{BASE}/{giftId}/lock-winners", null);
             res.EnsureSuccessStatusCode();
         }
+        public async Task UnlockGiftWinnersAsync(int giftId)
+        {
+            var response = await _http.PostAsync(
+                $"{BASE}/{giftId}/unlock-winners",
+                null
+            );
+            response.EnsureSuccessStatusCode();
+        }
 
         public async Task<List<GiftWinner>> GetWinnersAsync(int giftId)
         {

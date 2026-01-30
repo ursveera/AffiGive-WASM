@@ -14,6 +14,7 @@ namespace WASM.api
         Task<List<GiftParticipation>> GetParticipantsByGiftIdAsync(int giftId);
         Task<List<GiftParticipation>> GetAllParticipantsAsync();
         Task LockGiftWinnersAsync(int giftId);
+        Task UnlockGiftWinnersAsync(int giftId);
         Task<List<GiftWinner>> GetWinnersAsync(int giftId);
         Task<List<GiftWinnerDto>> GetWinnersWithUserAsync(int giftId);
     }
