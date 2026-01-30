@@ -102,11 +102,22 @@
                                     👥 Joined
                                 </button>
 
-                                <button class="btn btn-outline-success btn-sm me-1"
-                                        disabled="@isLocking"
-                                        @onclick="() => LockWinners(gift.Id)">
-                                    🏆 Lock Winners
-                                </button>
+                                @if (!gift.WinnersLocked)
+                                {
+                                    <button class="btn btn-outline-success btn-sm me-1"
+                                            disabled="@isLocking"
+                                            @onclick="() => LockWinners(gift.Id)">
+                                        🏆 Lock Winners
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-warning btn-sm me-1"
+                                            disabled="@isLocking"
+                                            @onclick="() => UnlockWinners(gift.Id)">
+                                        🔓 Unlock Winners
+                                    </button>
+                                }
 
                                 <button class="btn btn-outline-dark btn-sm me-1"
                                         @onclick="() => ViewWinners(gift.Id)">
@@ -277,13 +288,16 @@
                                     <th>User</th>
                                     <th>Email</th>
                                     <th>Won At</th>
+                                    <th>NickName</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var w in winners)
                                 {
                                     <tr>
-                                        <td>@w.UserName (@w.UserId)</td>
+                                        <td>@w.U_Name (@w.UserId)</td>
                                         <td>@w.Email</td>
                                         <td>@w.WonAt.ToLocalTime()</td>
                                         <td>
@@ -292,6 +306,9 @@
                                                 @w.UserName (@w.UserId)
                                             </button>
                                         </td>
+                                        <td>@w.U_Address</td>
+                                        <td>@w.U_Phone</td>
+
                                     </tr>
                                 }
                             </tbody>
@@ -537,6 +554,20 @@
         showForceDeleteModal = false; // Close modal immediately
         await GiftApi.ForceDeleteAsync(giftIdToForceDelete);
         await LoadGifts();
+    }
+    private async Task UnlockWinners(int giftId)
+    {
+        isLocking = true;
+
+        try
+        {
+            await GiftApi.UnlockGiftWinnersAsync(giftId);
+            await LoadGifts(); // refresh list
+        }
+        finally
+        {
+            isLocking = false;
+        }
     }
 }
 
