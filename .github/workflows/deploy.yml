@@ -23,7 +23,7 @@ jobs:
       run: dotnet restore WASM.csproj
 
     - name: Publish Blazor WASM
-      run: dotnet publish YourBlazorApp.csproj -c Release -o publish
+      run: dotnet publish WASM.csproj -c Release -o publish
 
     - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v3
