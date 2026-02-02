@@ -82,14 +82,14 @@ namespace WASM.api
             ) ?? new();
         }
 
-        public async Task UnlockMonthlyWinnersAsync(int year, int month)
+        public async Task<bool> UnlockMonthlyWinnersAsync(int year, int month)
         {
             var response = await _http.PostAsync(
                  $"{BASE}/leaderboard/unlock?year={year}&month={month}",
                  null
              );
 
-            response.EnsureSuccessStatusCode();
+            return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> IsMonthLockedAsync(int year, int month)
