@@ -30,7 +30,9 @@
                      <th>From</th>
                     <th>To</th>
                     <th>Ends</th>
+                    <th>Code</th>
                     <th>Active</th>
+                    <th>Is From Entry</th>
                     <th>Winner Lock</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -84,10 +86,18 @@
                                     @GetEndsText(gift.ToDate)
                                 </span>
                             </td>
+                            <td>
+                                @gift.Code
+                            </td>
 
                             <td>
                                 <span class="badge @(gift.IsActive ? "bg-success" : "bg-secondary")">
                                     @(gift.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(gift.isFromEntry ? "bg-success" : "bg-secondary")">
+                                    @(gift.isFromEntry ? "Active" : "Inactive")
                                 </span>
                             </td>
                             <td>
@@ -97,47 +107,64 @@
                             </td>
 
                             <td class="text-end">
-                                <button class="btn btn-outline-info btn-sm me-1"
-                                        @onclick="() => ViewParticipants(gift.Id)">
-                                    👥 Joined
-                                </button>
 
-                                @if (!gift.WinnersLocked)
-                                {
-                                    <button class="btn btn-outline-success btn-sm me-1"
-                                            disabled="@isLocking"
-                                            @onclick="() => LockWinners(gift.Id)">
-                                        🏆 Lock Winners
+                                <!-- Row 1 -->
+                                <div class="d-flex justify-content-end mb-1">
+                                    <button class="btn btn-outline-info btn-sm me-1"
+                                            title="Joined Participants"
+                                            @onclick="() => ViewParticipants(gift.Id)">
+                                        👥
                                     </button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-outline-warning btn-sm me-1"
-                                            disabled="@isLocking"
-                                            @onclick="() => UnlockWinners(gift.Id)">
-                                        🔓 Unlock Winners
+
+                                    @if (!gift.WinnersLocked)
+                                    {
+                                        <button class="btn btn-outline-success btn-sm me-1"
+                                                title="Lock Winners"
+                                                disabled="@isLocking"
+                                                @onclick="() => LockWinners(gift.Id, gift.isFromEntry, gift.Code)">
+                                            🏆
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-warning btn-sm me-1"
+                                                title="Unlock Winners"
+                                                disabled="@isLocking"
+                                                @onclick="() => UnlockWinners(gift.Id)">
+                                            🔓
+                                        </button>
+                                    }
+
+                                    <button class="btn btn-outline-dark btn-sm"
+                                            title="View Winners"
+                                            @onclick="() => ViewWinners(gift.Id)">
+                                        👁
                                     </button>
-                                }
+                                </div>
 
-                                <button class="btn btn-outline-dark btn-sm me-1"
-                                        @onclick="() => ViewWinners(gift.Id)">
-                                    👁 Winners
-                                </button>
+                                <!-- Row 2 -->
+                                <div class="d-flex justify-content-end">
+                                    <button class="btn btn-outline-primary btn-sm me-1"
+                                            title="Edit Gift"
+                                            @onclick="() => EditGift(gift)">
+                                        ✏️
+                                    </button>
 
-                                <button class="btn btn-outline-primary btn-sm me-1"
-                                        @onclick="() => EditGift(gift)">
-                                    ✏️ Edit
-                                </button>
+                                    <button class="btn btn-outline-danger btn-sm me-1"
+                                            title="Delete Gift"
+                                            @onclick="() => DeleteGift(gift.Id)">
+                                        🗑
+                                    </button>
 
-                                <button class="btn btn-outline-danger btn-sm"
-                                        @onclick="() => DeleteGift(gift.Id)">
-                                    🗑 Delete
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm"
-                                        @onclick="() => PrepareForceDelete(gift.Id)">
-                                    🗑 Force Delete
-                                </button>
+                                    <button class="btn btn-danger btn-sm"
+                                            title="Force Delete (Permanent)"
+                                            @onclick="() => PrepareForceDelete(gift.Id)">
+                                        💀
+                                    </button>
+                                </div>
+
                             </td>
+
                         </tr>
                     }
                 }
@@ -230,6 +257,17 @@
                     <span class="slider round"></span>
                 </label>
             </div>
+            <div class="col-md-4 d-flex align-items-center mt-3">
+                <label class="form-label fw-semibold me-3">Is From Entry</label>
+                <label class="switch">
+                    <input type="checkbox" @bind="giftModel.isFromEntry">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Code</label>
+                <input class="form-control" @bind="giftModel.Code" />
+            </div>
 
 
             <div class="col-12 mt-3">
@@ -267,61 +305,73 @@
 </div>
 @if (showWinnersModal)
 {
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">🏆 Winners (Gift ID: @selectedGiftId)</h5>
-                    <button class="btn-close" @onclick="CloseWinners"></button>
-                </div>
+    @if (showWinnersModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable winners-modal">
+                <div class="modal-content">
 
-                <div class="modal-body">
-                    @if (!winners.Any())
-                    {
-                        <div class="text-muted">No winners found</div>
-                    }
-                    else
-                    {
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Won At</th>
-                                    <th>NickName</th>
-                                    <th>Address</th>
-                                    <th>Phone</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var w in winners)
-                                {
-                                    <tr>
-                                        <td>@w.U_Name (@w.UserId)</td>
-                                        <td>@w.Email</td>
-                                        <td>@w.WonAt.ToLocalTime()</td>
-                                        <td>
-                                            <button class="btn btn-link p-0"
-                                                    @onclick="() => OpenUser(w.UserId)">
-                                                @w.UserName (@w.UserId)
-                                            </button>
-                                        </td>
-                                        <td>@w.U_Address</td>
-                                        <td>@w.U_Phone</td>
+                    <div class="modal-header">
+                        <h5 class="modal-title">🏆 Winners (Gift ID: @selectedGiftId)</h5>
+                        <button class="btn-close" @onclick="CloseWinners"></button>
+                    </div>
 
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                </div>
+                    <div class="modal-body">
+                        @if (!winners.Any())
+                        {
+                            <div class="text-muted text-center">No winners found</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Won At</th>
+                                            <th>NickName</th>
+                                            <th>Address</th>
+                                            <th>Phone</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var w in winners)
+                                        {
+                                            <tr>
+                                                <td>@w.U_Name (@w.UserId)</td>
+                                                <td>@w.Email</td>
+                                                <td>@w.WonAt.ToLocalTime()</td>
+                                                <td>
+                                                    <button class="btn btn-link p-0"
+                                                            @onclick="() => OpenUser(w.UserId)">
+                                                        @w.UserName (@w.UserId)
+                                                    </button>
+                                                </td>
+                                                <td class="text-wrap">@w.U_Address</td>
+                                                <td>@w.U_Phone</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseWinners">Close</button>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseWinners">
+                            Close
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Proper backdrop -->
+        <div class="modal-backdrop fade show"></div>
+    }
+
 }
 @if (showForceDeleteModal)
 {
@@ -377,14 +427,17 @@
         showWinnersModal = false;
         winners.Clear();
     }
-    private async Task LockWinners(int giftId)
+    private async Task LockWinners(int giftId, bool isFromEntry,string? code=null)
     {
         isLocking = true;
 
         try
         {
-            await GiftApi.LockGiftWinnersAsync(giftId);
-            await LoadGifts();
+            if (await GiftApi.LockGiftWinnersAsync(giftId,isFromEntry,code))
+            {
+                await LoadGifts();
+                Nav.NavigateTo($"/admin/ranks");
+            }
         }
         finally
         {
@@ -475,7 +528,10 @@
             IsActive = gift.IsActive,
             WinnerCount = gift.WinnerCount,
             WinnerPrizeAmount = gift.WinnerPrizeAmount,
-            WinnersLocked = gift.WinnersLocked
+            WinnersLocked = gift.WinnersLocked,
+            isFromEntry = gift.isFromEntry,
+            Code = gift.Code
+
         };
 
         isEditMode = true;
@@ -640,4 +696,17 @@
         input:checked + .slider:before {
             transform: translateX(24px);
         }
+
+    .winners-modal {
+        max-width: 95vw !important; /* Almost full screen */
+    }
+
+        .winners-modal .modal-content {
+            width: 100%;
+        }
+
+        .winners-modal .modal-body {
+            overflow-x: auto;
+        }
+
 </style>

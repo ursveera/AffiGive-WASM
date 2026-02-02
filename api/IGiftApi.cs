@@ -13,7 +13,7 @@ namespace WASM.api
         Task<bool> ForceDeleteAsync(int id);
         Task<List<GiftParticipation>> GetParticipantsByGiftIdAsync(int giftId);
         Task<List<GiftParticipation>> GetAllParticipantsAsync();
-        Task LockGiftWinnersAsync(int giftId);
+        Task<bool> LockGiftWinnersAsync(int giftId,bool isFromEntry,string? code=null);
         Task UnlockGiftWinnersAsync(int giftId);
         Task<List<GiftWinner>> GetWinnersAsync(int giftId);
         Task<List<GiftWinnerDto>> GetWinnersWithUserAsync(int giftId);

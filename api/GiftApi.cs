@@ -64,10 +64,18 @@ namespace WASM.api
             return await _http.GetFromJsonAsync<List<GiftParticipation>>($"{BASE}/participants") ?? new List<GiftParticipation>();
         }
 
-        public async Task LockGiftWinnersAsync(int giftId)
+        public async Task<bool> LockGiftWinnersAsync(int giftId,bool isFromEntry,string? code=null)
         {
-            var res = await _http.PostAsync($"{BASE}/{giftId}/lock-winners", null);
-            res.EnsureSuccessStatusCode();
+            try
+            {
+                var url = $"{BASE}/{giftId}/lock-winners?isFromEntry={isFromEntry}&code={code}";
+                var res = await _http.PostAsync(url, null);
+                return res.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
         }
         public async Task UnlockGiftWinnersAsync(int giftId)
         {

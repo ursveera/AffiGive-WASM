@@ -2,6 +2,8 @@
 @using SharedLib.DTO
 @using WASM.api
 @inject IUserApi UserApi
+@inject NavigationManager Nav
+
 
 <h3 class="mb-3">🏆 User Rankings (Admin)</h3>
 
@@ -41,6 +43,13 @@
                         @onclick="LockWinners">
                     🔒 Lock Winners
                 </button>
+                if(unlocked)
+                {
+                    <button class="btn btn-warning"
+                            @onclick="UnlockGiftNow">
+                        🔓 Unlock Gift Now
+                    </button>
+                }
             }
             else
             {
@@ -138,6 +147,7 @@ else
     private List<UserRankDto>? ranks;
 
     private int selectedYear = DateTime.Now.Year;
+    private bool unlocked = false;
     private int selectedMonth = DateTime.Now.Month;
 
     private bool isLocked;
@@ -203,7 +213,10 @@ else
         if (!await ConfirmAsync())
             return;
 
-        await UserApi.UnlockMonthlyWinnersAsync(selectedYear, selectedMonth);
+        if(await UserApi.UnlockMonthlyWinnersAsync(selectedYear, selectedMonth))
+        {
+            unlocked = true;
+        }
         await LoadBySelectedMonth();
     }
 
@@ -230,5 +243,9 @@ else
     {
         // Replace with modal if needed
         return await Task.FromResult(true);
+    }
+    private void UnlockGiftNow()
+    {
+        Nav.NavigateTo($"/admin/gifts");
     }
 }
