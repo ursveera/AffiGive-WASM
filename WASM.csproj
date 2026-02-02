@@ -19,18 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AffiGive.SharedLib" Version="1.0.2" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.22" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.22" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.9" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="SharedLib">
-      <HintPath>F:\Visual Studio Projects\AffiGive\AffiGive_API_V1\DAO\SharedLib\bin\Debug\net8.0\SharedLib.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
