@@ -19,6 +19,7 @@ namespace AffigiveUIBalzor.api
         Task<List<Winner>> GetAllAsync();
         Task<bool> UpdateWinnerAsync(Winner winner);
         Task<bool> DeleteWinnerByIdAsync(Guid id);
+        Task<bool> ForceDeleteWinnerAsync(Guid id);
     }
 
     public class WinnerApiGateway : IWinnerApiGateway
@@ -100,6 +101,12 @@ namespace AffigiveUIBalzor.api
                 Console.WriteLine($"DeleteWinnerAsync ERROR: {ex.Message}");
                 return false;
             }
+        }
+        public async Task<bool> ForceDeleteWinnerAsync(Guid id)
+        {
+            var res = await _http.DeleteAsync(
+                    $"{_endpoint}/ForceDeleteWinnerById/{id}");
+            return res.IsSuccessStatusCode;
         }
 
         // -------------------- GET WINNER ENTRIES BY CODE --------------------

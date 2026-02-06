@@ -98,5 +98,29 @@ namespace WASM.api
                        $"{BASE}/leaderboard/is-locked?year={year}&month={month}"
                    );
         }
+        public async Task<User> CreateUserAsync(User user)
+        {
+            var res = await _http.PostAsJsonAsync($"{BASE}/create", user);
+            res.EnsureSuccessStatusCode();
+            return await res.Content.ReadFromJsonAsync<User>();
+        }
+
+        public async Task<bool> UpdateUserAsync(User user)
+        {
+            var res = await _http.PutAsJsonAsync($"{BASE}/update", user);
+            return res.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> DeactivateUserAsync(int userId)
+        {
+            var res = await _http.PutAsync($"{BASE}/deactivate/{userId}", null);
+            return res.IsSuccessStatusCode;
+        }
+
+        public async Task<bool> ForceDeleteUserAsync(int userId)
+        {
+            var res = await _http.DeleteAsync($"{BASE}/force-delete/{userId}");
+            return res.IsSuccessStatusCode;
+        }
     }
 }

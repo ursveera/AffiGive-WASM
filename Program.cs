@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using WASM;
 using WASM.api;
+using WASM.api.WASM.api;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -54,5 +55,7 @@ builder.Services.AddScoped<ISourceLimitApi, SourceLimitApi>();
 builder.Services.AddScoped<IAccountDeleteRequestApi, AccountDeleteRequestApi>();
 builder.Services.AddScoped<IFaqApi, FaqApi>();
 builder.Services.AddScoped<ISupportApi, SupportApi>();
+builder.Services.AddScoped<Iytapi, YtApi>();
+builder.Services.AddScoped<IAdminNotificationApi, AdminNotificationApi>();
 
 await builder.Build().RunAsync();

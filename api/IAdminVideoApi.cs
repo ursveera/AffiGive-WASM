@@ -14,5 +14,6 @@ namespace AffigiveUIBalzor.api
         Task<bool> DeleteById(Guid id);
         Task<Video?> GetActiveLuckyGiftVideo();
         Task<bool> PickLuckyGiftVideo(Guid videoId);
+        Task<bool> UnPickLuckyGiftVideo(Guid videoId);
     }
 }

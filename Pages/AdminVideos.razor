@@ -109,7 +109,15 @@
                         <td>
                             @if (v.Id == activeLuckyVideoId)
                             {
-                                <span class="badge bg-success">Active</span>
+                                <button class="btn btn-success btn-sm modern-btn me-1" disabled>
+                                    ✅ Active
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm modern-btn"
+                                        title="Unset Lucky Gift"
+                                        @onclick="()=>UnsetLuckyGift(v.Id)">
+                                    ❌ Unset
+                                </button>
                             }
                             else
                             {
@@ -326,6 +334,17 @@
         if (!ok) return;
 
         activeLuckyVideoId = id;
+        StateHasChanged();
+    }
+    private async Task UnsetLuckyGift(Guid id)
+    {
+        if (activeLuckyVideoId == null)
+            return;
+
+        var ok = await VideoApi.UnPickLuckyGiftVideo(id);
+        if (!ok) return;
+
+        activeLuckyVideoId = null;
         StateHasChanged();
     }
 }
