@@ -1,0 +1,281 @@
+﻿@page "/admin/youtube-videos"
+@using SharedLib.Models
+@using WASM.api
+@inject Iytapi VideoApi
+
+<h3 class="mb-3">▶️ YouTube Video Manager</h3>
+
+<input class="form-control mb-3"
+       placeholder="Search videos..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+<div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-outline-primary"
+            @onclick="SyncYoutube">
+        🔄 Sync YouTube
+    </button>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        Video List
+    </div>
+
+    <div class="table-responsive" style="max-height:480px;overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light position-sticky top-0">
+                <tr>
+                    <th @onclick="() => SortBy(nameof(YouTubeVideo.Title))">Title</th>
+                    <th>Thumbnail</th>
+                    <th>Video</th>
+                    <th>Source</th>
+                    <th>Published</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var v in filteredVideos)
+                {
+                    <tr>
+                        <td>@v.Title</td>
+
+                        <td>
+                            <img src="@v.ThumbnailUrl"
+                                 style="width:80px;height:50px;object-fit:cover;border-radius:6px;" />
+                        </td>
+
+                        <td>
+                            <a href="@v.VideoUrl" target="_blank">Open</a>
+                        </td>
+
+                        <td>
+                            <span class="badge @(v.Source == "YouTube" ? "bg-danger" : "bg-success")">
+                                @v.Source
+                            </span>
+                        </td>
+
+                        <td>@v.PublishedAt.ToString("dd MMM yyyy")</td>
+
+                        <td class="text-end">
+                            @if (v.Source == "Manual")
+                            {
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => EditVideo(v)">
+                                    ✏️
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm me-1"
+                                        @onclick="() => DeleteVideo(v.Id)">
+                                    🗑
+                                </button>
+                            }
+
+                            <button class="btn btn-danger btn-sm"
+                                    title="Force Delete"
+                                    @onclick="() => PrepareForceDelete(v.Id)">
+                                💀
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ADD / EDIT -->
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEdit ? "✏️ Edit Video" : "➕ Add Manual Video")
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <label>Title</label>
+                <input class="form-control" @bind="videoModel.Title" />
+            </div>
+
+            <div class="col-md-6">
+                <label>Thumbnail URL</label>
+                <input class="form-control" @bind="videoModel.ThumbnailUrl" />
+            </div>
+
+            <div class="col-md-6">
+                <label>Video URL</label>
+                <input class="form-control" @bind="videoModel.VideoUrl" />
+            </div>
+
+            <div class="col-md-6">
+                <label>Published At</label>
+                <input type="date"
+                       class="form-control"
+                       @bind-value="videoModel.PublishedAt"
+                       @bind-value:event="onchange" />
+            </div>
+
+            <div class="col-12">
+                @if (isEdit)
+                {
+                    <button class="btn btn-warning me-2" @onclick="UpdateVideo">💾 Update</button>
+                    <button class="btn btn-secondary" @onclick="CancelEdit">❌ Cancel</button>
+                }
+                else
+                {
+                    <button class="btn btn-primary" @onclick="AddVideo">➕ Add</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FORCE DELETE MODAL -->
+@if (showForceDelete)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5>⚠️ Force Delete</h5>
+                    <button class="btn-close btn-close-white" @onclick="CancelForceDelete"></button>
+                </div>
+                <div class="modal-body text-center">
+                    This will permanently delete the video.<br />
+                    <strong>Are you sure?</strong>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelForceDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmForceDelete">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private List<YouTubeVideo> allVideos = new();
+    private List<YouTubeVideo> filteredVideos = new();
+
+    private YouTubeVideo videoModel = CreateYouTubeVideo();
+    private bool isEdit = false;
+
+    private string searchText = "";
+    private string sortColumn = "";
+    private bool sortAsc = true;
+
+    private bool showForceDelete = false;
+    private Guid forceDeleteId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVideos();
+    }
+
+    private async Task LoadVideos()
+    {
+        allVideos = await VideoApi.GetAllAsync();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredVideos = allVideos
+            .Where(v =>
+                string.IsNullOrWhiteSpace(searchText)
+                || v.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        ApplySort();
+    }
+
+    private void SortBy(string col)
+    {
+        sortAsc = sortColumn == col ? !sortAsc : true;
+        sortColumn = col;
+        ApplySort();
+    }
+
+    private void ApplySort()
+    {
+        if (!string.IsNullOrEmpty(sortColumn))
+        {
+            filteredVideos = sortAsc
+                ? filteredVideos.OrderBy(v => v.GetType().GetProperty(sortColumn)?.GetValue(v)).ToList()
+                : filteredVideos.OrderByDescending(v => v.GetType().GetProperty(sortColumn)?.GetValue(v)).ToList();
+        }
+    }
+
+    private async Task SyncYoutube()
+    {
+        await VideoApi.SyncAsync();
+        await LoadVideos();
+    }
+
+    private async Task AddVideo()
+    {
+        await VideoApi.AddManualAsync(videoModel);
+        videoModel = new();
+        await LoadVideos();
+    }
+
+    private void EditVideo(YouTubeVideo v)
+    {
+        isEdit = true;
+        videoModel = new YouTubeVideo
+        {
+            Id = v.Id,
+            Title = v.Title,
+            ThumbnailUrl = v.ThumbnailUrl,
+            VideoUrl = v.VideoUrl,
+            PublishedAt = v.PublishedAt
+        };
+    }
+
+    private async Task UpdateVideo()
+    {
+        await VideoApi.UpdateManualAsync(videoModel.Id, videoModel);
+        CancelEdit();
+        await LoadVideos();
+    }
+
+    private void CancelEdit()
+    {
+        isEdit = false;
+        videoModel = new();
+    }
+
+    private async Task DeleteVideo(Guid id)
+    {
+        await VideoApi.DeleteManualAsync(id);
+        await LoadVideos();
+    }
+
+    private void PrepareForceDelete(Guid id)
+    {
+        forceDeleteId = id;
+        showForceDelete = true;
+    }
+
+    private void CancelForceDelete()
+    {
+        showForceDelete = false;
+    }
+
+    private async Task ConfirmForceDelete()
+    {
+        showForceDelete = false;
+        await VideoApi.ForceDeleteAsync(forceDeleteId);
+        await LoadVideos();
+    }
+    private static YouTubeVideo CreateYouTubeVideo()
+    {
+        return new YouTubeVideo
+        {
+            PublishedAt = DateTime.UtcNow.Date,
+        };
+    }
+}

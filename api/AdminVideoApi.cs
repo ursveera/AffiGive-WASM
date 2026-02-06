@@ -123,5 +123,15 @@ namespace AffigiveUIBalzor.api
 
             return response.IsSuccessStatusCode;
         }
+        // UNPICK (SET) ACTIVE LUCKY GIFT VIDEO
+        public async Task<bool> UnPickLuckyGiftVideo(Guid videoId)
+        {
+            var response = await _httpClient.PostAsync(
+                $"{_endpoint}/{videoId}/UnPickLuckyGiftVideo",
+                null
+            );
+
+            return response.IsSuccessStatusCode;
+        }
     }
 }

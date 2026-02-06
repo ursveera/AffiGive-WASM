@@ -1,0 +1,320 @@
+﻿@page "/admin/notifications"
+@using SharedLib.DTO
+@using WASM.api
+@inject IAdminNotificationApi NotificationApi
+
+<h3 class="mb-3">🔔 Admin Notifications</h3>
+
+<!-- CREATE -->
+<button class="btn btn-success mb-3"
+        @onclick="NewNotification">
+    ➕ Create Notification
+</button>
+
+<!-- SEARCH -->
+<input class="form-control mb-3"
+       placeholder="Search by title, message, type..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+@if (items == null)
+{
+    <p class="text-muted">Loading notifications...</p>
+}
+else if (!FilteredItems.Any())
+{
+    <div class="alert alert-warning">No notifications found.</div>
+}
+else
+{
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle small">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (n, i) in FilteredItems.Select((v, i) => (v, i + 1)))
+                    {
+                        <tr>
+                            <td>@i</td>
+
+                            <td class="fw-semibold">@n.Title</td>
+
+                            <td>
+                                <span class="badge bg-info">
+                                    @n.Type
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge @(n.IsActive ? "bg-success" : "bg-danger")">
+                                    @(n.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+
+                            <td>@n.CreatedAt.ToString("dd MMM yyyy")</td>
+
+                            <td class="text-nowrap">
+                                <button class="btn btn-outline-secondary btn-sm me-1"
+                                        @onclick="() => View(n)">
+                                    👁
+                                </button>
+
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => Edit(n)">
+                                    ✏
+                                </button>
+
+                                <button class="btn btn-warning btn-sm me-1"
+                                        @onclick="() => ToggleActive(n)">
+                                    @(n.IsActive ? "🚫" : "✅")
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="() => AskDelete(n)">
+                                    🗑
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- VIEW MODAL -->
+@if (viewItem != null)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">🔔 Notification</h5>
+                    <button class="btn-close" @onclick="CloseView"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p><b>Title:</b> @viewItem.Title</p>
+                    <p><b>Message:</b> @viewItem.Message</p>
+                    <p><b>Type:</b> @viewItem.Type</p>
+
+                    @if (!string.IsNullOrEmpty(viewItem.ImageUrl))
+                    {
+                        <img src="@viewItem.ImageUrl"
+                             class="img-fluid rounded mt-2"
+                             onerror="this.style.display='none'" />
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseView">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+<!-- CREATE / EDIT MODAL -->
+@if (editItem != null)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        @(editItem.Id == 0 ? "➕ Create Notification" : "✏ Edit Notification")
+                    </h5>
+                    <button class="btn-close" @onclick="CloseEdit"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label>Title</label>
+                            <input class="form-control" @bind="editItem.Title" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Type</label>
+                            <select class="form-select" @bind="editItem.Type">
+                                <option value="NORMAL">NORMAL</option>
+                                <option value="UPDATE">UPDATE</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label>Message</label>
+                            <textarea class="form-control"
+                                      rows="3"
+                                      @bind="editItem.Message"></textarea>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label>Image URL</label>
+                            <input class="form-control"
+                                   @bind="editItem.ImageUrl" />
+                        </div>
+
+                        <div class="col-md-6 mt-3">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       @bind="editItem.IsActive" />
+                                <label class="form-check-label">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseEdit">
+                        Cancel
+                    </button>
+                    <button class="btn btn-success" @onclick="SaveEdit">
+                        💾 Save
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+<!-- DELETE CONFIRM -->
+@if (deleteItem != null)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+
+                <div class="modal-body">
+                    Delete <b>@deleteItem.Title</b> permanently?
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">
+                        Delete
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private List<AdminNotificationDto>? items;
+    private AdminNotificationDto? viewItem;
+    private AdminNotificationDto? editItem;
+    private AdminNotificationDto? deleteItem;
+    private string searchText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = await NotificationApi.GetAllAsync();
+    }
+
+    private IEnumerable<AdminNotificationDto> FilteredItems =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? items!
+            : items!.Where(x =>
+                (x.Title ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (x.Message ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (x.Type ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            );
+
+    /* VIEW */
+    private void View(AdminNotificationDto n) => viewItem = n;
+    private void CloseView() => viewItem = null;
+
+    /* CREATE */
+    private void NewNotification()
+    {
+        editItem = new AdminNotificationDto
+        {
+            Type = "NORMAL",
+            IsActive = true
+        };
+    }
+
+    /* EDIT */
+    private void Edit(AdminNotificationDto n)
+    {
+        editItem = new AdminNotificationDto
+        {
+            Id = n.Id,
+            Title = n.Title,
+            Message = n.Message,
+            ImageUrl = n.ImageUrl,
+            Type = n.Type,
+            IsActive = n.IsActive,
+            CreatedAt = n.CreatedAt
+        };
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editItem == null) return;
+
+        if (editItem.Id == 0)
+        {
+            await NotificationApi.CreateAsync(editItem);
+        }
+        else
+        {
+            await NotificationApi.UpdateAsync(editItem);
+        }
+
+        items = await NotificationApi.GetAllAsync();
+        editItem = null;
+    }
+
+    private void CloseEdit() => editItem = null;
+
+    /* ACTIVATE / DEACTIVATE */
+    private async Task ToggleActive(AdminNotificationDto n)
+    {
+        n.IsActive = !n.IsActive;
+        await NotificationApi.UpdateAsync(n);
+        items = await NotificationApi.GetAllAsync();
+    }
+
+    /* DELETE */
+    private void AskDelete(AdminNotificationDto n) => deleteItem = n;
+
+    private async Task ConfirmDelete()
+    {
+        if (deleteItem == null) return;
+        await NotificationApi.DeleteAsync(deleteItem.Id);
+        items = await NotificationApi.GetAllAsync();
+        deleteItem = null;
+    }
+
+    private void CancelDelete() => deleteItem = null;
+}

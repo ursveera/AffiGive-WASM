@@ -2,6 +2,7 @@
 @using AffiGive_API_V1.Models
 @using AffiGive_API_V1.DTO
 @using AffigiveUIBalzor.api
+@using SharedLib.DTO
 @inject IWinnerApiGateway WinnerApi
 @inject IEntryApiGateway EntryApi
 
@@ -147,11 +148,17 @@
                                 Edit
                             </button>
 
-                            <button class="btn btn-danger btn-sm"
+                            <button class="btn btn-danger btn-sm me-1"
                                     @onclick="() => DeleteWinner(w.Id)">
-                                Delete
+                                Soft Delete
+                            </button>
+
+                            <button class="btn btn-dark btn-sm"
+                                    @onclick="() => ForceDeleteWinner(w.Id)">
+                                Force Delete
                             </button>
                         </td>
+
                     </tr>
                 }
             </tbody>
@@ -210,7 +217,7 @@
     private List<Winner> allWinners = new();
     private List<Winner> filteredWinners = new();
 
-    private List<Entry> allEntries = new();       // ⭐ LOAD ENTRIES HERE
+    private List<EntryDto> allEntries = new();       // ⭐ LOAD ENTRIES HERE
     private List<WinnerEntryDto> winnerEntryList = new();
 
     /* ===========================================================
@@ -346,5 +353,22 @@
     private async Task LoadAllWinnerEntries()
     {
         winnerEntryList = await WinnerApi.GetAllWinnerEntriesAsync();
+    }
+    private async Task ForceDeleteWinner(Guid id)
+    {
+        message = "Deleting permanently...";
+
+        var ok = await WinnerApi.ForceDeleteWinnerAsync(id);
+
+        if (ok)
+        {
+            allWinners.RemoveAll(x => x.Id == id);
+            filteredWinners = allWinners.ToList();
+            message = "Winner permanently deleted!";
+        }
+        else
+        {
+            message = "Force delete failed!";
+        }
     }
 }

@@ -17,5 +17,9 @@ namespace WASM.api
         Task<List<UserRankDto>> GetMonthlyWinnersArrayAsync(int year, int month);
         Task<bool> UnlockMonthlyWinnersAsync(int year, int month);
         Task<bool> IsMonthLockedAsync(int year, int month);
+        Task<User> CreateUserAsync(User user);
+        Task<bool> UpdateUserAsync(User user);
+        Task<bool> DeactivateUserAsync(int userId);
+        Task<bool> ForceDeleteUserAsync(int userId);
     }
 }

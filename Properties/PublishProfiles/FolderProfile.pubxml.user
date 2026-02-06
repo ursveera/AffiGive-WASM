@@ -2,8 +2,8 @@
 <!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
 <Project>
   <PropertyGroup>
-    <_PublishTargetUrl>C:\Users\Ursve\source\repos\AffiGive-WASM\bin\Release\net8.0\browser-wasm\publish\</_PublishTargetUrl>
-    <History>True|2026-02-02T09:39:50.7713990Z||;</History>
+    <_PublishTargetUrl>C:\inetpub\wwwroot</_PublishTargetUrl>
+    <History>True|2026-02-04T07:27:39.3224266Z||;False|2026-02-04T12:56:49.2521008+05:30||;True|2026-02-04T11:11:22.4658246+05:30||;True|2026-02-02T23:27:12.4679262+05:30||;True|2026-02-02T15:09:50.7713990+05:30||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>

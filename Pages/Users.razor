@@ -6,11 +6,17 @@
 
 <h3 class="mb-3">👥 Users</h3>
 
+<!-- SEARCH -->
+<input class="form-control mb-3"
+       placeholder="Search by name, email, phone, invite code, status..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
 @if (users == null)
 {
     <p class="text-muted">Loading users...</p>
 }
-else if (!users.Any())
+else if (!FilteredUsers.Any())
 {
     <div class="alert alert-warning">No users found.</div>
 }
@@ -22,6 +28,7 @@ else
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
+                        <th>ID</th>
                         <th>User</th>
                         <th>Email</th>
                         <th>Phone</th>
@@ -29,14 +36,15 @@ else
                         <th>Account</th>
                         <th>Created</th>
                         <th>Last Login</th>
-                        <th></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var (u, i) in users.Select((v, i) => (v, i + 1)))
+                    @foreach (var (u, i) in FilteredUsers.Select((v, i) => (v, i + 1)))
                     {
                         <tr class="@(IsSelectedUser(u) ? "table-warning fw-semibold" : "")">
                             <td>@i</td>
+                            <td>@u.Id</td>
 
                             <td>
                                 <img src="@u.ProfileImage"
@@ -44,6 +52,7 @@ else
                                      style="width:32px;height:32px"
                                      onerror="this.style.display='none'" />
 
+                                <!-- KEEP ORIGINAL NAVIGATION -->
                                 <button class="btn btn-link p-0 fw-semibold"
                                         @onclick="() => ShowUserCoins(u)">
                                     @(u.Name ?? "(No Name)")
@@ -63,10 +72,25 @@ else
                             <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
                             <td>@u.LastLogin.ToString("dd MMM yyyy")</td>
 
-                            <td>
-                                <button class="btn btn-outline-secondary btn-sm"
-                                        @onclick="() => ShowUser(u)">
+                            <td class="text-nowrap">
+                                <button class="btn btn-outline-secondary btn-sm me-1"
+                                        @onclick="() => ViewUser(u)">
                                     👁 View
+                                </button>
+
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => EditUser(u)">
+                                    ✏ Edit
+                                </button>
+
+                                <button class="btn btn-warning btn-sm me-1"
+                                        @onclick="() => DeactivateUser(u)">
+                                    🚫
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="() => AskForceDelete(u)">
+                                    🗑
                                 </button>
                             </td>
                         </tr>
@@ -77,7 +101,8 @@ else
     </div>
 }
 
-@if (selectedUser != null)
+<!-- VIEW MODAL (UNCHANGED DATA, READ ONLY) -->
+@if (viewUser != null)
 {
     <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -85,62 +110,105 @@ else
 
                 <div class="modal-header">
                     <h5 class="modal-title">👤 User Details</h5>
-                    <button class="btn-close" @onclick="CloseUser"></button>
+                    <button class="btn-close" @onclick="CloseView"></button>
                 </div>
 
                 <div class="modal-body">
                     <div class="row g-3">
-
                         <div class="col-md-3 text-center">
-                            <img src="@selectedUser.ProfileImage"
+                            <img src="@viewUser.ProfileImage"
                                  class="img-fluid rounded-circle mb-2"
                                  style="max-width:120px"
                                  onerror="this.style.display='none'" />
                         </div>
 
                         <div class="col-md-9">
-                            <p><b>ID:</b> @selectedUser.Id</p>
-                            <p><b>Google ID:</b> @selectedUser.GoogleId</p>
-                            <p><b>Name:</b> @selectedUser.Name</p>
-                            <p><b>Nick Name:</b> @selectedUser.NickName</p>
-                            <p><b>Email:</b> @selectedUser.Email</p>
-                            <p><b>Phone:</b> @selectedUser.Phone</p>
-                            <p><b>Address:</b> @selectedUser.Address</p>
+                            <p><b>ID:</b> @viewUser.Id</p>
+                            <p><b>Google ID:</b> @viewUser.GoogleId</p>
+                            <p><b>Name:</b> @viewUser.Name</p>
+                            <p><b>Nick Name:</b> @viewUser.NickName</p>
+                            <p><b>Email:</b> @viewUser.Email</p>
+                            <p><b>Phone:</b> @viewUser.Phone</p>
+                            <p><b>Address:</b> @viewUser.Address</p>
                         </div>
+                    </div>
+                </div>
 
-                        <hr />
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseView">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+<!-- EDIT MODAL -->
+@if (editUser != null)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">✏ Edit User</h5>
+                    <button class="btn-close" @onclick="CloseEdit"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
 
                         <div class="col-md-6">
-                            <p><b>Invite Code:</b> @selectedUser.InviteCode</p>
-                            <p><b>Invited By:</b> @selectedUser.InvitedByUserId</p>
-                            <p><b>Account Status:</b> @selectedUser.AccountStatus</p>
-                            <p><b>Active:</b> @(selectedUser.isActive ? "Yes" : "No")</p>
+                            <label>Name</label>
+                            <input class="form-control" @bind="editUser.Name" />
                         </div>
 
                         <div class="col-md-6">
-                            <p><b>Created At:</b> @selectedUser.CreatedAt</p>
-                            <p><b>Last Login:</b> @selectedUser.LastLogin</p>
-                            <p><b>Deleted At:</b> @selectedUser.DeletedAt</p>
+                            <label>Nick Name</label>
+                            <input class="form-control" @bind="editUser.NickName" />
                         </div>
 
-                        <hr />
+                        <div class="col-md-6">
+                            <label>Email</label>
+                            <input class="form-control" @bind="editUser.Email" />
+                        </div>
 
-                        <div class="col-12">
-                            <p><b>Refresh Token:</b></p>
-                            <code class="small text-break">
-                                @selectedUser.RefreshToken
-                            </code>
-                            <p class="mt-2">
-                                <b>Token Expiry:</b> @selectedUser.RefreshTokenExpiry
-                            </p>
+                        <div class="col-md-6">
+                            <label>Phone</label>
+                            <input class="form-control" @bind="editUser.Phone" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label>Address</label>
+                            <textarea class="form-control" rows="2"
+                                      @bind="editUser.Address"></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Account Status</label>
+                            <input class="form-control" @bind="editUser.AccountStatus" />
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       @bind="editUser.isActive" />
+                                <label class="form-check-label">
+                                    Active
+                                </label>
+                            </div>
                         </div>
 
                     </div>
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseUser">
-                        Close
+                    <button class="btn btn-secondary" @onclick="CloseEdit">
+                        Cancel
+                    </button>
+                    <button class="btn btn-success" @onclick="SaveEdit">
+                        💾 Save
                     </button>
                 </div>
 
@@ -149,33 +217,123 @@ else
     </div>
 }
 
+<!-- FORCE DELETE CONFIRM -->
+@if (deleteUser != null)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    Delete <b>@deleteUser.Name</b> permanently?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
 
     private List<User>? users;
-    private User? selectedUser;
+    private User? viewUser;
+    private User? editUser;
+    private User? deleteUser;
+    private string searchText = "";
     private string? selectedUserId;
 
     protected override async Task OnInitializedAsync()
     {
         var uri = new Uri(Nav.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        var selectedUserId = query["selectedUserId"];
+        selectedUserId = query["selectedUserId"];
 
         users = await UserApi.GetAllUsersAsync();
     }
 
-    private void ShowUser(User u)
+    /* SEARCH */
+    private IEnumerable<User> FilteredUsers =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? users!
+            : users!.Where(u =>
+                (u.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (u.Email ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (u.Phone ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (u.InviteCode ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (u.AccountStatus ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            );
+
+    /* VIEW */
+    private void ViewUser(User u) => viewUser = u;
+    private void CloseView() => viewUser = null;
+
+    /* EDIT */
+    private void EditUser(User u)
     {
-        selectedUser = u;
+        // CLONE FULL OBJECT (THIS IS THE KEY)
+        editUser = new User
+        {
+            Id = u.Id,
+            GoogleId = u.GoogleId,
+            Name = u.Name,
+            NickName = u.NickName,
+            Email = u.Email,
+            Phone = u.Phone,
+            Address = u.Address,
+            InviteCode = u.InviteCode,
+            InvitedByUserId = u.InvitedByUserId,
+            AccountStatus = u.AccountStatus,
+            isActive = u.isActive,
+
+            // IMPORTANT FIELDS (DO NOT DROP)
+            CreatedAt = u.CreatedAt,
+            LastLogin = u.LastLogin,
+            RefreshToken = u.RefreshToken,
+            RefreshTokenExpiry = u.RefreshTokenExpiry,
+            ProfileImage = u.ProfileImage,
+            DeletedAt = u.DeletedAt
+        };
     }
+
+    private async Task SaveEdit()
+    {
+        if (editUser == null) return;
+        await UserApi.UpdateUserAsync(editUser);
+        users = await UserApi.GetAllUsersAsync();
+        editUser = null;
+    }
+
+    private void CloseEdit() => editUser = null;
+
+    /* SOFT DELETE */
+    private async Task DeactivateUser(User u)
+    {
+        u.isActive = false;
+        await UserApi.UpdateUserAsync(u);
+        users = await UserApi.GetAllUsersAsync();
+    }
+
+    /* FORCE DELETE */
+    private void AskForceDelete(User u) => deleteUser = u;
+
+    private async Task ConfirmDelete()
+    {
+        if (deleteUser == null) return;
+        await UserApi.ForceDeleteUserAsync(deleteUser.Id);
+        users = await UserApi.GetAllUsersAsync();
+        deleteUser = null;
+    }
+
+    private void CancelDelete() => deleteUser = null;
+
     private void ShowUserCoins(User u)
     {
         Nav.NavigateTo($"/admin/users/{u.Id}");
-    }
-
-    private void CloseUser()
-    {
-        selectedUser = null;
     }
 
     private bool IsSelectedUser(User u)

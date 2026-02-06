@@ -2,6 +2,7 @@
 @using AffiGive_API_V1.Models
 @using AffiGive_API_V1.DTO
 @using AffigiveUIBalzor.api
+@using SharedLib.DTO
 @inject IEntryApiGateway EntryApi
 
 <h3 class="mb-3">🎟️ Entry Manager</h3>
@@ -15,10 +16,10 @@
 
             <thead class="table-light position-sticky top-0 shadow-sm" style="z-index:5;">
                 <tr>
-                   @*  <th>Name</th>
+                     <th>Name</th>
                     <th>Nickname</th>
                     <th>Email</th>
-                    <th>Phone</th> *@
+                    <th>Phone</th>
                     <th>Video Code</th>
                     <th>Valid</th>
                     <th style="width:150px;" class="text-end">Actions</th>
@@ -29,14 +30,14 @@
                 @foreach (var e in filteredEntries)
                 {
                     <tr class="table-row-modern">
-                        @* <td>@e.Name</td>
-                        <td>@e.NickName</td>
-                        <td>@e.Email</td>
-                        <td>@e.Phone</td> *@
-                        <td>@e.Code</td>
+                        <td>@e.user.Name</td>
+                        <td>@e.user.NickName</td>
+                        <td>@e.user.Email</td>
+                        <td>@e.user.Phone</td>
+                        <td>@e.entry.Code</td>
 
                         <td>
-                            @if (e.IsValid)
+                            @if (e.entry.IsValid)
                             {
                                 <span class="badge bg-success">Valid</span>
                             }
@@ -54,7 +55,7 @@
                             </button>
 
                             <button class="btn btn-outline-danger btn-sm modern-btn"
-                                    @onclick="() => DeleteEntry(e.Id)">
+                                    @onclick="() => DeleteEntry(e.entry.Id)">
                                 <i class="bi bi-trash">Delete</i>
                             </button>
                         </td>
@@ -73,40 +74,40 @@
     <div class="card-body">
         <div class="row g-3">
 
-            @* <div class="col-md-4">
+            <div class="col-md-4">
                 <label class="form-label fw-semibold">Name</label>
-                <input class="form-control modern-input" @bind="entryModel.Name" />
+                <input class="form-control modern-input" @bind="entryModel.user.Name" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Nickname</label>
-                <input class="form-control modern-input" @bind="entryModel.NickName" />
+                <input class="form-control modern-input" @bind="entryModel.user.NickName" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Email</label>
-                <input class="form-control modern-input" @bind="entryModel.Email" />
+                <input class="form-control modern-input" @bind="entryModel.user.Email" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Phone</label>
-                <input class="form-control modern-input" @bind="entryModel.Phone" />
+                <input class="form-control modern-input" @bind="entryModel.user.Phone" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Address</label>
-                <input class="form-control modern-input" @bind="entryModel.Address" />
-            </div>*@
+                <input class="form-control modern-input" @bind="entryModel.user.Address" />
+            </div>
 
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Video Code</label>
-                <input class="form-control modern-input" @bind="entryModel.Code" />
-            </div> 
+                <input class="form-control modern-input" @bind="entryModel.entry.Code" />
+            </div>
 
             <div class="col-md-4 d-flex align-items-center mt-3">
                 <label class="form-label fw-semibold me-3">Valid</label>
                 <label class="switch">
-                    <input type="checkbox" @bind="entryModel.IsValid">
+                    <input type="checkbox" @bind="entryModel.entry.IsValid">
                     <span class="slider round"></span>
                 </label>
             </div>
@@ -136,10 +137,14 @@
 
 @code {
 
-    private List<Entry> allEntries = new();
-    private List<Entry> filteredEntries = new();
+    private List<EntryDto> allEntries = new();
+    private List<EntryDto> filteredEntries = new();
 
-    private Entry entryModel = new();
+    private EntryDto entryModel = new()
+    {
+        user = new User(),
+        entry = new Entry()
+    };
     private string searchNick = "";
     private string searchCode = "";
     private bool _showValidOnly;
@@ -171,71 +176,86 @@
         filteredEntries = allEntries
             .Where(e =>
                 // (string.IsNullOrWhiteSpace(searchNick) || e.NickName.Contains(searchNick, StringComparison.OrdinalIgnoreCase)) &&
-                (string.IsNullOrWhiteSpace(searchCode) || e.Code.Contains(searchCode, StringComparison.OrdinalIgnoreCase)) &&
-                (!showValidOnly || e.IsValid)
+                (string.IsNullOrWhiteSpace(searchCode) || e.entry.Code.Contains(searchCode, StringComparison.OrdinalIgnoreCase)) &&
+                (!showValidOnly || e.entry.IsValid)
             )
             .ToList();
     }
 
     private async Task AddEntry()
     {
-        var response = await EntryApi.AddEntryAsync(entryModel);
+        var response = await EntryApi.AddEntryAsync(entryModel.entry);
         if (response.entry != null)
         {
             allEntries.Add(entryModel);
             ApplyFilter();
-            entryModel = new();
+            entryModel = new EntryDto
+            {
+                user = new User(),
+                entry = new Entry()
+            };
         }
     }
 
-    private void EditEntry(Entry e)
+    private void EditEntry(EntryDto e)
     {
         isEdit = true;
-        entryModel = new Entry
-            {
-                Id = e.Id,
-                // Name = e.Name,
-                // NickName = e.NickName,
-                // Email = e.Email,
-                // Phone = e.Phone,
-                // Address = e.Address,
-                Code = e.Code,
-                IsValid = e.IsValid,
-                CreatedAt = e.CreatedAt
-            };
+        entryModel.entry = new Entry
+        {
+            Id = e.entry.Id,
+            Code = e.entry.Code,
+            IsValid = e.entry.IsValid,
+            CreatedAt = e.entry.CreatedAt
+        };
+        entryModel.user = new User
+        {
+            Name = e.user.Name,
+            NickName = e.user.NickName,
+            Email = e.user.Email,
+            Phone = e.user.Phone,
+            Address = e.user.Address
+        };
     }
 
     private async Task UpdateEntry()
     {
         await EntryApi.UpdateEntryAsync(entryModel);
 
-        var existing = allEntries.FirstOrDefault(x => x.Id == entryModel.Id);
+        var existing = allEntries.FirstOrDefault(x => x.entry.Id == entryModel.entry.Id);
         if (existing != null)
         {
-            // existing.Name = entryModel.Name;
-            // existing.NickName = entryModel.NickName;
-            // existing.Email = entryModel.Email;
-            // existing.Phone = entryModel.Phone;
-            // existing.Address = entryModel.Address;
-            existing.Code = entryModel.Code;
-            existing.IsValid = entryModel.IsValid;
+            existing.user.Name = entryModel.user.Name;
+            existing.user.NickName = entryModel.user.NickName;
+            existing.user.Email = entryModel.user.Email;
+            existing.user.Phone = entryModel.user.Phone;
+            existing.user.Address = entryModel.user.Address;
+            existing.entry.Code = entryModel.entry.Code;
+            existing.entry.IsValid = entryModel.entry.IsValid;
         }
 
         ApplyFilter();
-        entryModel = new();
+        entryModel = new EntryDto
+        {
+            user = new User(),
+            entry = new Entry()
+        };
         isEdit = false;
     }
 
     private void CancelEdit()
     {
         isEdit = false;
-        entryModel = new();
+        entryModel = new EntryDto
+        {
+            user = new User(),
+            entry = new Entry()
+        };
     }
 
     private async Task DeleteEntry(Guid id)
     {
         await EntryApi.DeleteEntryAsync(id);
-        allEntries.RemoveAll(e => e.Id == id);
+        allEntries.RemoveAll(e => e.entry.Id == id);
         ApplyFilter();
     }
 

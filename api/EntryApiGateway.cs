@@ -1,5 +1,6 @@
 ﻿using AffiGive_API_V1.DTO;
 using AffiGive_API_V1.Models;
+using SharedLib.DTO;
 using System.Net.Http.Json;
 
 namespace AffigiveUIBalzor.api
@@ -21,10 +22,19 @@ namespace AffigiveUIBalzor.api
             return await response.Content.ReadFromJsonAsync<EntryResponse>();
         }
 
-        public async Task<PagedResult<Entry>> GetAllAsync(int page, int pageSize)
+        public async Task<PagedResult<EntryDto>> GetAllAsync(int page, int pageSize)
         {
-            return await _http.GetFromJsonAsync<PagedResult<Entry>>(
-                $"{BASE}/GetAllEntries?page={page}&pageSize={pageSize}");
+            try
+            {
+
+                var res = await _http.GetFromJsonAsync<PagedResult<EntryDto>>(
+                    $"{BASE}/GetAllEntries?page={page}&pageSize={pageSize}");
+                return res;
+            }
+            catch (Exception ex)
+            {
+                return new PagedResult<EntryDto>();
+            }
         }
 
         public async Task<PagedResult<Entry>> GetAllValidAsync(int page, int pageSize)
@@ -51,9 +61,9 @@ namespace AffigiveUIBalzor.api
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<int> UpdateEntryAsync(Entry entry)
+        public async Task<int> UpdateEntryAsync(EntryDto entry)
         {
-            var response = await _http.PutAsJsonAsync($"{BASE}/{entry.Id}/UpdateEntry", entry);
+            var response = await _http.PutAsJsonAsync($"{BASE}/{entry.entry.Id}/UpdateEntry", entry);
             return response.IsSuccessStatusCode ? 1 : 0;
         }
 
