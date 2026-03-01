@@ -3,7 +3,10 @@
 
 @using SharedLib.Models
 @using WASM.api
+@using AffiGive_API_V1.Models
+
 @inject IGiftApi GiftApi
+@inject IUserApi UserApi
 @inject NavigationManager Nav
 
 <h3 class="mb-3">👥 Gift Participants</h3>
@@ -26,7 +29,7 @@ else
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>User ID</th>
+                        <th>User</th>
                         <th>Joined At</th>
                     </tr>
                 </thead>
@@ -35,12 +38,24 @@ else
                     {
                         <tr>
                             <td>@index</td>
+
                             <td>
-                                <button class="btn btn-link p-0"
-                                        @onclick="() => OpenUser(item.UserId, GiftId)">
-                                    @item.UserId
+                                <button class="btn btn-link text-start p-0"
+                                        @onclick="async () => await OpenUser(item.UserId, GiftId)">
+
+                                    <div class="fw-semibold">
+                                        @item.UserId
+                                    </div>
+
+                                    <div class="text-muted small">
+                                        @(userMap.ContainsKey(item.UserId)
+                                                                        ? userMap[item.UserId].Name
+                                                                        : "Loading...")
+                                    </div>
+
                                 </button>
                             </td>
+
                             <td>@item.JoinedAt.ToString("dd MMM yyyy HH:mm")</td>
                         </tr>
                     }
@@ -54,34 +69,131 @@ else
     🔙 Back
 </button>
 
+@* ===========================
+   USER DETAILS MODAL
+=========================== *@
+@if (selectedUser != null || isUserLoading)
+{
+    <div class="modal fade show d-block" style="background:rgba(0,0,0,.6)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">👤 User Information</h5>
+                    <button class="btn-close" @onclick="CloseModal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    @if (isUserLoading)
+                    {
+                        <p class="text-muted">Loading user details...</p>
+                    }
+                    else if (selectedUser != null)
+                    {
+                        <div class="row g-3">
+
+                            <div class="col-md-4 text-center">
+                                <img src="@selectedUser.ProfileImage"
+                                     class="rounded-circle shadow"
+                                     style="width:110px;height:110px;object-fit:cover" />
+
+                                <h6 class="mt-2">@selectedUser.Name</h6>
+
+                                <span class="badge bg-success">
+                                    @selectedUser.AccountStatus
+                                </span>
+                            </div>
+
+                            <div class="col-md-8">
+
+                                <p><b>User ID:</b> @selectedUser.Id</p>
+                                <p><b>Email:</b> @selectedUser.Email</p>
+                                <p><b>Phone:</b> @selectedUser.Phone</p>
+                                <p><b>Nickname:</b> @selectedUser.NickName</p>
+                                <p><b>Invite Code:</b> @selectedUser.InviteCode</p>
+                                <p><b>Invited By:</b> @selectedUser.InvitedByUserId</p>
+                                <p><b>Address:</b> @selectedUser.Address</p>
+                                <p><b>Created:</b> @selectedUser.CreatedAt.ToString("dd MMM yyyy")</p>
+                                <p><b>Last Login:</b> @selectedUser.LastLogin.ToString("dd MMM yyyy HH:mm")</p>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+
+                    @if (selectedUser != null)
+                    {
+                        <button class="btn btn-primary"
+                                @onclick="GoToCoinHistory">
+                            🪙 Coin History
+                        </button>
+                    }
+
+                    <button class="btn btn-secondary" @onclick="CloseModal">
+                        Close
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+
     [Parameter] public int? GiftId { get; set; }
 
     private List<GiftParticipation>? participants;
+    private Dictionary<string, User> userMap = new();
+
+    private User? selectedUser;
+    private bool isUserLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
+        // ⭐ Load participants
         if (GiftId.HasValue)
-        {
-            // 🎁 Gift-specific participants
             participants = await GiftApi.GetParticipantsByGiftIdAsync(GiftId.Value);
-        }
         else
-        {
-            // 👥 All participants (navbar usage)
             participants = await GiftApi.GetAllParticipantsAsync();
-        }
+
+        // ⭐ Load users for username display
+        var users = await UserApi.GetAllUsersAsync();
+        userMap = users.ToDictionary(u => u.Id.ToString(), u => u);
     }
 
     private void GoBack()
     {
         Nav.NavigateTo("/admin/gifts");
     }
-    private void OpenUser(string userId, int? giftId)
+
+    private async Task OpenUser(string userId, int? giftId)
     {
-        if (giftId!=null)
-            Nav.NavigateTo($"/admin/users/{userId}?giftId={giftId}");
-        else
-            Nav.NavigateTo($"/admin/users/{userId}");
+        isUserLoading = true;
+        selectedUser = null;
+
+        selectedUser = await UserApi.GetByUserId(userId);
+
+        isUserLoading = false;
+    }
+
+    private void CloseModal()
+    {
+        selectedUser = null;
+    }
+
+    private void GoToCoinHistory()
+    {
+        if (selectedUser == null)
+            return;
+
+        // ⭐ Navigate to coin history page
+        Nav.NavigateTo($"/admin/users/{selectedUser.Id}");
     }
 }

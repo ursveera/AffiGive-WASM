@@ -436,7 +436,7 @@
             if (await GiftApi.LockGiftWinnersAsync(giftId,isFromEntry,code))
             {
                 await LoadGifts();
-                Nav.NavigateTo($"/admin/ranks");
+                Nav.NavigateTo($"/admin/ranks/{giftId}");
             }
         }
         finally

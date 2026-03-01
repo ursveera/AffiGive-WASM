@@ -219,7 +219,13 @@
 
     private async Task UpdateEntry()
     {
-        await EntryApi.UpdateEntryAsync(entryModel);
+
+        await EntryApi.UpdateEntryAsync(new UpdateEntryRequest
+        {
+                Code = entryModel.entry.Code,
+                IsValid = entryModel.entry.IsValid,
+            Id = entryModel.entry.Id,
+        });
 
         var existing = allEntries.FirstOrDefault(x => x.entry.Id == entryModel.entry.Id);
         if (existing != null)
