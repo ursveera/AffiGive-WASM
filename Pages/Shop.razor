@@ -1,0 +1,246 @@
+﻿@page "/admin/shop"
+@using WASM.Api
+@using SharedLib.Models
+@inject IShopApi ShopApi
+
+<h3 class="mb-3">🛒 Shop Manager</h3>
+
+<input class="form-control mb-3"
+       placeholder="Search item..."
+       @bind="searchText"
+       @bind:event="oninput" />
+
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        Shop Items
+    </div>
+
+    <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0">
+
+            <thead class="table-light position-sticky top-0">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Icon</th>
+                    <th>Price</th>
+                    <th>Reward</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @if (!filteredItems.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            🚫 No shop items
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in filteredItems)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>@item.Id</strong>
+                            </td>
+
+                            <td>@item.Name</td>
+
+                            <td>@item.Icon</td>
+
+                            <td>
+                                <span class="badge bg-info">
+                                    @item.Price
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-success">
+                                    +@item.Reward
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+
+                                <button class="btn btn-outline-primary btn-sm me-1"
+                                        @onclick="() => EditItem(item)">
+                                    ✏️ Edit
+                                </button>
+
+                                <button class="btn btn-outline-danger btn-sm"
+                                        @onclick="() => DeleteItem(item.Id)">
+                                    🗑 Delete
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    }
+                }
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+
+<div class="card shadow-sm border-0 mt-4">
+
+    <div class="card-header bg-white fw-semibold py-3 border-bottom">
+        @(isEditMode ? "✏️ Edit Item" : "➕ Create Item")
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label">Id</label>
+                <input class="form-control" @bind="itemModel.Id" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Name</label>
+                <input class="form-control" @bind="itemModel.Name" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Icon</label>
+                <input class="form-control" @bind="itemModel.Icon" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Price</label>
+                <input type="number"
+                       class="form-control"
+                       @bind="itemModel.Price" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Reward</label>
+                <input type="number"
+                       class="form-control"
+                       @bind="itemModel.Reward" />
+            </div>
+
+            <div class="col-12 mt-3">
+
+                @if (isEditMode)
+                {
+                    <button class="btn btn-warning me-2"
+                            @onclick="UpdateItem">
+                        💾 Update
+                    </button>
+
+                    <button class="btn btn-secondary"
+                            @onclick="CancelEdit">
+                        ❌ Cancel
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary"
+                            @onclick="CreateItem">
+                        ➕ Create Item
+                    </button>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@code {
+
+    private List<ShopItems> allItems = new();
+    private List<ShopItems> filteredItems = new();
+
+    private ShopItems itemModel = CreateDefaultItem();
+
+    private bool isEditMode = false;
+
+    private string searchText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItems();
+    }
+
+    private static ShopItems CreateDefaultItem()
+    {
+        return new ShopItems();
+    }
+
+    private async Task LoadItems()
+    {
+        var items = await ShopApi.GetAllAsync();
+        allItems = items.ToList();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredItems = allItems
+            .Where(i =>
+                string.IsNullOrWhiteSpace(searchText)
+                || i.Id.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || i.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task CreateItem()
+    {
+        await ShopApi.CreateAsync(itemModel);
+        itemModel = CreateDefaultItem();
+        await LoadItems();
+    }
+
+    private void EditItem(ShopItems item)
+    {
+        itemModel = new ShopItems
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Icon = item.Icon,
+            Price = item.Price,
+            Reward = item.Reward
+        };
+
+        isEditMode = true;
+    }
+
+    private async Task UpdateItem()
+    {
+        await ShopApi.UpdateAsync(itemModel.Id, itemModel);
+
+        isEditMode = false;
+
+        itemModel = CreateDefaultItem();
+
+        await LoadItems();
+    }
+
+    private void CancelEdit()
+    {
+        isEditMode = false;
+        itemModel = CreateDefaultItem();
+    }
+
+    private async Task DeleteItem(string id)
+    {
+        await ShopApi.DeleteAsync(id);
+        await LoadItems();
+    }
+}
