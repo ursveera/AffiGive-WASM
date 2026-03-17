@@ -54,11 +54,15 @@ namespace WASM.api
         {
             return await _http.GetFromJsonAsync<List<UserRankDto>>($"{BASE}/leaderboard") ?? new();
         }
+        public async Task<List<UserRankDto>> GetTopUserRanksByMonthAsync(int top=10,int month=0)
+        {
+            return await _http.GetFromJsonAsync<List<UserRankDto>>($"{BASE}/leaderboardByMonth?month={month}") ?? new();
+        }
 
-        public async Task LockMonthlyWinnersAsync(int year, int month, int top = 10)
+        public async Task LockMonthlyWinnersAsync(int year, int month, int top = 10, int giftId=0)
         {
             var response = await _http.PostAsync(
-                $"{BASE}/leaderboard/lock?year={year}&month={month}&top={top}",
+                $"{BASE}/leaderboard/lock?year={year}&month={month}&top={top}&giftId={giftId}",
                 null
             );
 

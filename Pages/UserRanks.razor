@@ -1,4 +1,5 @@
 ﻿@page "/admin/ranks"
+@page "/admin/ranks/{GiftId:int?}"
 @using SharedLib.DTO
 @using WASM.api
 @inject IUserApi UserApi
@@ -18,17 +19,72 @@
                    @bind:after="LoadBySelectedMonth" />
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-12">
             <label class="form-label">Month</label>
-            <select class="form-select"
-                    @bind="selectedMonth"
-                    @bind:event="onchange"
-                    @bind:after="LoadBySelectedMonth">
-                @for (int m = 1; m <= 12; m++)
-                {
-                    <option value="@m">@MonthNames[m - 1]</option>
-                }
-            </select>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <button class="btn @(selectedMonth == 1 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(1)">
+                    Jan
+                </button>
+
+                <button class="btn @(selectedMonth == 2 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(2)">
+                    Feb
+                </button>
+
+                <button class="btn @(selectedMonth == 3 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(3)">
+                    Mar
+                </button>
+
+                <button class="btn @(selectedMonth == 4 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(4)">
+                    Apr
+                </button>
+
+                <button class="btn @(selectedMonth == 5 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(5)">
+                    May
+                </button>
+
+                <button class="btn @(selectedMonth == 6 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(6)">
+                    Jun
+                </button>
+
+                <button class="btn @(selectedMonth == 7 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(7)">
+                    Jul
+                </button>
+
+                <button class="btn @(selectedMonth == 8 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(8)">
+                    Aug
+                </button>
+
+                <button class="btn @(selectedMonth == 9 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(9)">
+                    Sep
+                </button>
+
+                <button class="btn @(selectedMonth == 10 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(10)">
+                    Oct
+                </button>
+
+                <button class="btn @(selectedMonth == 11 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(11)">
+                    Nov
+                </button>
+
+                <button class="btn @(selectedMonth == 12 ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => SelectMonth(12)">
+                    Dec
+                </button>
+
+            </div>
         </div>
 
         <div class="col-md-6 text-end">
@@ -143,7 +199,8 @@ else
     // -------------------------
     // DATA
     // -------------------------
-
+    [Parameter]
+    public int giftId { get; set; }
     private List<UserRankDto>? ranks;
 
     private int selectedYear = DateTime.Now.Year;
@@ -204,7 +261,7 @@ else
         }
         else
         {
-            ranks = await UserApi.GetTopUserRanksAsync();
+            ranks = await UserApi.GetTopUserRanksByMonthAsync(10,selectedMonth);
             statusText = "Live leaderboard (not locked)";
         }
     }
@@ -232,7 +289,7 @@ else
         if (!await ConfirmAsync())
             return;
 
-        await UserApi.LockMonthlyWinnersAsync(selectedYear, selectedMonth, 10);
+        await UserApi.LockMonthlyWinnersAsync(selectedYear, selectedMonth, 10,giftId);
 
         ranks = await UserApi.GetMonthlyWinnersArrayAsync(selectedYear, selectedMonth);
         isLocked = true;
@@ -247,5 +304,10 @@ else
     private void UnlockGiftNow()
     {
         Nav.NavigateTo($"/admin/gifts");
+    }
+    private async Task SelectMonth(int month)
+    {
+        selectedMonth = month;
+        await LoadBySelectedMonth();
     }
 }

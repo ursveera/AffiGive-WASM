@@ -12,8 +12,9 @@ namespace WASM.api
         Task<List<CoinHistoryDto>> GetUserCoinHistoryAsync(string userId);
         Task<List<User>> GetAllUsersAsync();
         Task<List<UserRankDto>> GetTopUserRanksAsync(int top = 10);
+        Task<List<UserRankDto>> GetTopUserRanksByMonthAsync(int top = 10,int month=0);
         Task<List<UserRankDto>> GetMonthlyWinnersAsync(int year, int month);
-        Task LockMonthlyWinnersAsync(int year, int month, int top = 10);
+        Task LockMonthlyWinnersAsync(int year, int month, int top = 10,int giftId=0);
         Task<List<UserRankDto>> GetMonthlyWinnersArrayAsync(int year, int month);
         Task<bool> UnlockMonthlyWinnersAsync(int year, int month);
         Task<bool> IsMonthLockedAsync(int year, int month);

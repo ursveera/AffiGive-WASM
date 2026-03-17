@@ -61,10 +61,17 @@ namespace AffigiveUIBalzor.api
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<int> UpdateEntryAsync(EntryDto entry)
+        public async Task<int> UpdateEntryAsync(UpdateEntryRequest entry)
         {
-            var response = await _http.PutAsJsonAsync($"{BASE}/{entry.entry.Id}/UpdateEntry", entry);
-            return response.IsSuccessStatusCode ? 1 : 0;
+            try
+            {
+                var response = await _http.PutAsJsonAsync($"{BASE}/{entry.Id}/UpdateEntry", entry);
+                return response.IsSuccessStatusCode ? 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
         }
 
         public async Task<bool> CheckNickNameExists(string nickname)

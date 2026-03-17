@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WASM;
 using WASM.api;
 using WASM.api.WASM.api;
+using WASM.Api;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -57,5 +58,6 @@ builder.Services.AddScoped<IFaqApi, FaqApi>();
 builder.Services.AddScoped<ISupportApi, SupportApi>();
 builder.Services.AddScoped<Iytapi, YtApi>();
 builder.Services.AddScoped<IAdminNotificationApi, AdminNotificationApi>();
+builder.Services.AddScoped<IShopApi, ShopApi>();
 
 await builder.Build().RunAsync();

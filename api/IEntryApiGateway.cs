@@ -12,7 +12,7 @@ namespace AffigiveUIBalzor.api
         Task<PagedResult<Entry>> SearchByNickNameAsync(string nickname, int page, int pageSize);
         Task<PagedResult<Entry>> SearchByCodeAsync(string code, int page, int pageSize);
         Task<bool> DeleteEntryAsync(Guid id);
-        Task<int> UpdateEntryAsync(EntryDto entry);
+        Task<int> UpdateEntryAsync(UpdateEntryRequest entry);
         Task<bool> CheckNickNameExists(string nickname);
         Task<bool> CheckMailExists(string code, string email);
     }
