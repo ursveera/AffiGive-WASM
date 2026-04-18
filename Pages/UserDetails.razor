@@ -6,119 +6,177 @@
 @inject IUserApi UserApi
 @inject NavigationManager Nav
 
-<h3 class="mb-3">👤 User Details</h3>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">👤 User Details</h1>
+    <p class="text-muted">View user information and coin history</p>
+</div>
 
 @if (user == null)
 {
-    <p class="text-muted">Loading user...</p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-3">Loading user details...</p>
+    </div>
 }
 else
 {
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <div class="d-flex align-items-center">
+    <!-- User Profile Card -->
+    <div class="card premium-card shadow-lg border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-4">
                 @if (!string.IsNullOrWhiteSpace(user?.ProfileImage))
                 {
                     <a href="@user.ProfileImage" target="_blank" rel="noopener noreferrer">
                         <img src="@user.ProfileImage"
                              referrerpolicy="no-referrer"
-                             class="rounded-circle me-3"
-                             style="width:64px;height:64px" />
+                             class="rounded-circle profile-image"
+                             style="width:100px;height:100px;object-fit:cover;border:4px solid #667eea;" />
                     </a>
                 }
 
-                <div>
-                    <h5 class="mb-1">@user.Name</h5>
-                    <div class="text-muted">@user.Email</div>
-                    <div class="mt-1">
-                        <span class="badge bg-success">
-                            💰 @totalCoins Coins
+                <div class="flex-grow-1">
+                    <h3 class="fw-bold mb-1">@user.Name</h3>
+                    <div class="text-muted mb-2">
+                        <a href="mailto:@user.Email" class="text-primary text-decoration-none">
+                            @user.Email
+                        </a>
+                    </div>
+                    @if (!string.IsNullOrEmpty(user.Phone))
+                    {
+                        <div class="text-muted mb-3">
+                            <a href="tel:@user.Phone" class="text-primary text-decoration-none">
+                                📱 @user.Phone
+                            </a>
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-gradient-primary fs-6 px-3 py-2">
+                            🪙 @totalCoins Coins
+                        </span>
+                        <span class="badge @(user.isActive ? "bg-success" : "bg-danger") fs-6 px-3 py-2">
+                            @(user.isActive ? "✓ Active" : "✗ Inactive")
+                        </span>
+                        <span class="badge bg-info fs-6 px-3 py-2 text-white">
+                            @user.AccountStatus
                         </span>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    <button class="btn btn-secondary mt-3" @onclick="GoBack">
-        🔙 Back
-    </button>
-}
 
-<h5>🪙 Coin History</h5>
-@if (coinHistory != null && coinHistory.Any())
-{
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <strong>Group by:</strong>
-
-                <button class="btn btn-sm @(selectedSource == null ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => FilterBySource(null)">
-                    All
+                <button class="btn btn-premium-secondary" @onclick="GoBack">
+                    <span class="btn-icon">🔙</span> Back
                 </button>
+            </div>
+        </div>
+    </div>
 
-                @foreach (var source in coinHistory.Select(x => x.Source).Distinct())
-                {
-                    <button class="btn btn-sm @(selectedSource == source ? "btn-primary" : "btn-outline-primary")"
-                            @onclick="() => FilterBySource(source)">
-                        @source
+    <!-- Coin History Section -->
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-header premium-header">
+            <h5 class="mb-0">🪙 Coin History</h5>
+        </div>
+
+        @if (coinHistory != null && coinHistory.Any())
+        {
+            <div class="card-body p-4 bg-light border-bottom">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <span class="fw-semibold text-muted">Filter by source:</span>
+
+                    <button class="btn btn-sm filter-btn @(selectedSource == null ? "filter-btn-active" : "filter-btn-inactive")"
+                            @onclick="() => FilterBySource(null)">
+                        📋 All
                     </button>
-                }
-            </div>
 
-            <!-- 🔥 TOTAL COINS DISPLAY -->
-            <div>
-                <span class="badge bg-success fs-6">
-                    🪙 Total Coins: @groupedTotalCoins
-                </span>
-            </div>
-
-        </div>
-    </div>
-}
-@if (coinHistory == null)
-{
-    <p class="text-muted">Loading coin history...</p>
-}
-else if (!coinHistory.Any())
-{
-    <div class="alert alert-warning">
-        No coin history found.
-    </div>
-}
-else
-{
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Coins</th>
-                        <th>Source</th>
-                        <th>Reference</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var (c, i) in filteredCoinHistory!.Select((v, i) => (v, i + 1)))
+                    @foreach (var source in coinHistory.Select(x => x.Source).Distinct())
                     {
-                        <tr>
-                            <td>@i</td>
-                            <td>
-                                <span class="badge @(c.Coins > 0 ? "bg-success" : "bg-danger")">
-                                    @c.Coins
-                                </span>
-                            </td>
-                            <td>@c.Source</td>
-                            <td>@c.ReferenceDate?.ToString("dd MMM yyyy")</td>
-                            <td>@c.CreatedAt.ToString("dd MMM yyyy hh:mm:ss tt")</td>
-                        </tr>
+                        <button class="btn btn-sm filter-btn @(selectedSource == source ? "filter-btn-active" : "filter-btn-inactive")"
+                                @onclick="() => FilterBySource(source)">
+                            @source
+                        </button>
                     }
-                </tbody>
-            </table>
-        </div>
+                </div>
+
+                <div>
+                    <span class="badge bg-gradient-primary fs-6 px-3 py-2">
+                        🪙 Total Coins: @groupedTotalCoins
+                    </span>
+                </div>
+            </div>
+
+            <div class="table-responsive premium-table-container">
+                <table class="table premium-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Coins</th>
+                            <th>Source</th>
+                            <th>Reference</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (!filteredCoinHistory!.Any())
+                        {
+                            <tr class="empty-state">
+                                <td colspan="5" class="text-center py-4">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📭</div>
+                                    <span class="text-muted">No coin history for this filter</span>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var (c, i) in filteredCoinHistory!.Select((v, i) => (v, i + 1)))
+                            {
+                                <tr class="premium-row">
+                                    <td>
+                                        <span class="badge bg-gradient-primary">@i</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @(c.Coins > 0 ? "bg-success" : "bg-danger") fs-6">
+                                            @(c.Coins > 0 ? "+" : "")@c.Coins
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="fw-semibold">@c.Source</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="text-muted">@c.ReferenceDate?.ToString("dd MMM yyyy")</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="text-muted small">@c.CreatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (coinHistory == null)
+        {
+            <div class="card-body p-5 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Loading coin history...</p>
+            </div>
+        }
+        else
+        {
+            <div class="card-body p-5 text-center">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                <h5 class="text-muted fw-semibold">No Coin History</h5>
+                <p class="text-muted">This user has no coin transactions yet</p>
+            </div>
+        }
     </div>
 }
 
@@ -169,4 +227,251 @@ else
         groupedTotalCoins = filteredCoinHistory?.Sum(x => x.Coins) ?? 0;
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Profile Image */
+    .profile-image {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .profile-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Filter Buttons */
+    .filter-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #e5e7eb;
+        font-size: 0.9rem;
+    }
+
+    .filter-btn-active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .filter-btn-active:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .filter-btn-inactive {
+        background-color: white;
+        color: #1f2937;
+        border-color: #e5e7eb;
+    }
+
+    .filter-btn-inactive:hover {
+        background-color: #f9fafb;
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    .empty-state {
+        background-color: #f9fafb;
+    }
+
+    /* Premium Buttons */
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        color: #1f2937;
+        text-decoration: none;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    /* Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .d-flex.align-items-center.gap-4 {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .flex-grow-1 {
+            width: 100%;
+        }
+
+        .d-flex.gap-2.flex-wrap {
+            justify-content: center;
+        }
+
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .premium-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-premium-secondary {
+            width: 100%;
+        }
+
+        .filter-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+    }
+</style>
 

@@ -1,22 +1,72 @@
 ﻿@page "/error"
 @using System.Diagnostics
+@inject NavigationManager Nav
 
 <PageTitle>Error</PageTitle>
 
-<h1 class="text-danger">Error</h1>
-<h2 class="text-danger">Something went wrong.</h2>
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon mb-4">
+            ⚠️
+        </div>
 
-@if (ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong>
-        <code>@RequestId</code>
-    </p>
-}
+        <h1 class="display-4 fw-bold text-danger mb-2">
+            Oops! Something Went Wrong
+        </h1>
 
-<p>
-    Please try again or contact support if the problem persists.
-</p>
+        <p class="lead text-muted mb-4">
+            We encountered an unexpected error while processing your request.
+        </p>
+
+        <div class="card premium-card shadow-lg border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="error-details">
+                    <p class="text-muted mb-3">
+                        Don't worry, our team has been notified. You can:
+                    </p>
+
+                    <ul class="error-actions mb-0">
+                        <li>
+                            <strong>Try again:</strong> 
+                            <span class="text-muted">Refresh the page or go back and try your action again.</span>
+                        </li>
+                        <li>
+                            <strong>Go home:</strong> 
+                            <span class="text-muted">Return to the main dashboard and start fresh.</span>
+                        </li>
+                        <li>
+                            <strong>Contact support:</strong> 
+                            <span class="text-muted">If the problem persists, reach out to our support team.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                @if (ShowRequestId)
+                {
+                    <div class="error-request-id mt-4 pt-4 border-top">
+                        <small class="text-muted d-block mb-2">
+                            <strong>Error Reference ID:</strong>
+                        </small>
+                        <code class="error-code-display">@RequestId</code>
+                        <small class="text-muted d-block mt-2">
+                            Share this ID when contacting support for faster assistance.
+                        </small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="error-actions-group d-flex gap-3 flex-wrap justify-content-center">
+            <button class="btn btn-lg btn-premium-primary" @onclick="GoHome">
+                <span class="btn-icon">🏠</span> Go Home
+            </button>
+
+            <button class="btn btn-lg btn-premium-secondary" @onclick="GoBack">
+                <span class="btn-icon">🔙</span> Go Back
+            </button>
+        </div>
+    </div>
+</div>
 
 @code {
     private string? RequestId;
@@ -27,4 +77,237 @@
         // Client-side request identifier
         RequestId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
     }
+
+    private void GoHome()
+    {
+        // Navigate to home page using NavigationManager
+        Nav.NavigateTo("/home");
+    }
+
+    private void GoBack()
+    {
+        // Navigate back in browser history using JavaScript
+        Nav.NavigateTo("javascript:history.back();");
+    }
 }
+
+<style>
+    .error-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .error-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .error-container::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -5%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(30px);
+        }
+    }
+
+    .error-content {
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .error-icon {
+        font-size: 5rem;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .error-content h1 {
+        color: #1f2937;
+        letter-spacing: -1px;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    .error-content .lead {
+        font-size: 1.2rem;
+        line-height: 1.6;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .error-details {
+        text-align: left;
+    }
+
+    .error-actions {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .error-actions li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .error-actions li:last-child {
+        border-bottom: none;
+    }
+
+    .error-actions strong {
+        color: #667eea;
+        min-width: 100px;
+    }
+
+    .error-request-id {
+        background-color: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .error-code-display {
+        display: block;
+        background-color: #1f2937;
+        color: #10b981;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+        word-break: break-all;
+        font-weight: 600;
+    }
+
+    .error-actions-group {
+        margin-top: 2rem;
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 14px 28px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .error-icon {
+            font-size: 3.5rem;
+        }
+
+        .error-content h1 {
+            font-size: 2rem;
+        }
+
+        .error-content .lead {
+            font-size: 1rem;
+        }
+
+        .error-actions-group {
+            flex-direction: column;
+        }
+
+        .btn-premium-primary,
+        .btn-premium-secondary {
+            width: 100%;
+        }
+
+        .error-container {
+            padding: 1rem;
+        }
+    }
+</style>

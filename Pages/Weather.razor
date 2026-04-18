@@ -3,37 +3,67 @@
 
 <PageTitle>Weather</PageTitle>
 
-<h1>Weather</h1>
-
-<p>This component demonstrates showing data.</p>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">⛅ Weather Forecast</h1>
+    <p class="text-muted">5-day weather forecast</p>
+</div>
 
 @if (forecasts == null)
 {
-    <p><em>Loading...</em></p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-3">Loading weather forecast...</p>
+    </div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-header premium-header">
+            <h5 class="mb-0">📊 5-Day Forecast</h5>
+        </div>
+
+        <div class="table-responsive premium-table-container">
+            <table class="table premium-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>📅 Date</th>
+                        <th style="width: 150px;">🌡️ Temp (°C)</th>
+                        <th style="width: 150px;">🔥 Temp (°F)</th>
+                        <th>📝 Summary</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var forecast in forecasts)
+                    {
+                        <tr class="premium-row">
+                            <td>
+                                <span class="fw-semibold">@forecast.Date.ToLongDateString()</span>
+                            </td>
+
+                            <td>
+                                <span class="badge @GetTemperatureBadgeC(forecast.TemperatureC) fs-6">
+                                    @forecast.TemperatureC°C
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge @GetTemperatureBadgeF(forecast.TemperatureF) fs-6">
+                                    @forecast.TemperatureF°F
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="summary-badge">@GetWeatherEmoji(forecast.Summary) @forecast.Summary</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @code {
@@ -54,6 +84,39 @@ else
         }).ToArray();
     }
 
+    private string GetTemperatureBadgeC(int tempC) => tempC switch
+    {
+        < 0 => "bg-primary",      // Freezing - Blue
+        < 5 => "bg-info",         // Chilly - Cyan
+        < 15 => "bg-success",     // Cool - Green
+        < 25 => "bg-warning",     // Mild/Warm - Yellow
+        _ => "bg-danger"          // Hot/Scorching - Red
+    };
+
+    private string GetTemperatureBadgeF(int tempF) => tempF switch
+    {
+        < 32 => "bg-primary",     // Freezing - Blue
+        < 41 => "bg-info",        // Chilly - Cyan
+        < 59 => "bg-success",     // Cool - Green
+        < 77 => "bg-warning",     // Mild/Warm - Yellow
+        _ => "bg-danger"          // Hot/Scorching - Red
+    };
+
+    private string GetWeatherEmoji(string? summary) => summary?.ToLower() switch
+    {
+        "freezing" => "❄️",
+        "bracing" => "🌬️",
+        "chilly" => "🧊",
+        "cool" => "🌤️",
+        "mild" => "⛅",
+        "warm" => "☀️",
+        "balmy" => "🌞",
+        "hot" => "🔥",
+        "sweltering" => "🌡️",
+        "scorching" => "🔥🔥",
+        _ => "⛅"
+    };
+
     private class WeatherForecast
     {
         public DateOnly Date { get; set; }
@@ -62,3 +125,166 @@ else
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 700px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    /* Summary Badge */
+    .summary-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background-color: #f3f4f6;
+        color: #1f2937;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    /* Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .premium-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .premium-table thead th {
+            font-size: 0.8rem;
+            padding: 0.75rem 0.5rem;
+        }
+
+        .summary-badge {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+        }
+    }
+</style>

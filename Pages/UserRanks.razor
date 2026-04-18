@@ -5,186 +5,219 @@
 @inject IUserApi UserApi
 @inject NavigationManager Nav
 
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">🏆 User Rankings</h1>
+    <p class="text-muted">View and manage monthly user rankings and winners</p>
+</div>
 
-<h3 class="mb-3">🏆 User Rankings (Admin)</h3>
-
-<div class="card mb-3 p-3">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label">Year</label>
-            <input type="number"
-                   class="form-control"
-                   @bind="selectedYear"
-                   @bind:event="onchange"
-                   @bind:after="LoadBySelectedMonth" />
-        </div>
-
-        <div class="col-md-12">
-            <label class="form-label">Month</label>
-
-            <div class="d-flex flex-wrap gap-2">
-
-                <button class="btn @(selectedMonth == 1 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(1)">
-                    Jan
-                </button>
-
-                <button class="btn @(selectedMonth == 2 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(2)">
-                    Feb
-                </button>
-
-                <button class="btn @(selectedMonth == 3 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(3)">
-                    Mar
-                </button>
-
-                <button class="btn @(selectedMonth == 4 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(4)">
-                    Apr
-                </button>
-
-                <button class="btn @(selectedMonth == 5 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(5)">
-                    May
-                </button>
-
-                <button class="btn @(selectedMonth == 6 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(6)">
-                    Jun
-                </button>
-
-                <button class="btn @(selectedMonth == 7 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(7)">
-                    Jul
-                </button>
-
-                <button class="btn @(selectedMonth == 8 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(8)">
-                    Aug
-                </button>
-
-                <button class="btn @(selectedMonth == 9 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(9)">
-                    Sep
-                </button>
-
-                <button class="btn @(selectedMonth == 10 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(10)">
-                    Oct
-                </button>
-
-                <button class="btn @(selectedMonth == 11 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(11)">
-                    Nov
-                </button>
-
-                <button class="btn @(selectedMonth == 12 ? "btn-primary" : "btn-outline-primary")"
-                        @onclick="() => SelectMonth(12)">
-                    Dec
-                </button>
-
-            </div>
-        </div>
-
-        <div class="col-md-6 text-end">
-            <button class="btn btn-primary me-2"
-                    @onclick="LoadCurrentMonth">
-                🔄 Load Current Month
-            </button>
-
-            @if (!isLocked)
-            {
-                <button class="btn btn-danger"
-                        @onclick="LockWinners">
-                    🔒 Lock Winners
-                </button>
-                if(unlocked)
-                {
-                    <button class="btn btn-warning"
-                            @onclick="UnlockGiftNow">
-                        🔓 Unlock Gift Now
-                    </button>
-                }
-            }
-            else
-            {
-                <button class="btn btn-warning"
-                        @onclick="UnlockWinners">
-                    🔓 Unlock Winners
-                </button>
-            }
-        </div>
+<div class="card premium-card shadow-lg border-0 mb-4">
+    <div class="card-header premium-header">
+        <h5 class="mb-0">📅 Filter by Period</h5>
     </div>
 
-    <small class="text-muted d-block mt-2">
-        @statusText
-    </small>
+    <div class="card-body p-4">
+        <div class="row g-4 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Year</label>
+                <input type="number"
+                       class="form-control premium-input"
+                       @bind="selectedYear"
+                       @bind:event="onchange"
+                       @bind:after="LoadBySelectedMonth" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-semibold mb-3">Month</label>
+                <div class="month-button-group d-flex flex-wrap gap-2">
+                    <button class="btn month-btn @(selectedMonth == 1 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(1)">
+                        Jan
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 2 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(2)">
+                        Feb
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 3 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(3)">
+                        Mar
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 4 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(4)">
+                        Apr
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 5 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(5)">
+                        May
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 6 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(6)">
+                        Jun
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 7 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(7)">
+                        Jul
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 8 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(8)">
+                        Aug
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 9 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(9)">
+                        Sep
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 10 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(10)">
+                        Oct
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 11 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(11)">
+                        Nov
+                    </button>
+
+                    <button class="btn month-btn @(selectedMonth == 12 ? "month-btn-active" : "month-btn-inactive")"
+                            @onclick="() => SelectMonth(12)">
+                        Dec
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="button-group d-flex flex-wrap gap-2">
+                    <button class="btn btn-premium-secondary"
+                            @onclick="LoadCurrentMonth">
+                        <span class="btn-icon">🔄</span> Current Month
+                    </button>
+
+                    @if (!isLocked)
+                    {
+                        <button class="btn btn-premium-primary"
+                                @onclick="LockWinners">
+                            <span class="btn-icon">🔒</span> Lock Winners
+                        </button>
+                        @if (unlocked)
+                        {
+                            <button class="btn btn-premium-warning"
+                                    @onclick="UnlockGiftNow">
+                                <span class="btn-icon">🔓</span> Unlock Gift
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button class="btn btn-premium-warning"
+                                @onclick="UnlockWinners">
+                            <span class="btn-icon">🔓</span> Unlock Winners
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="status-message">
+                    <small class="text-muted">@statusText</small>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @if (ranks == null)
 {
-    <p class="text-muted">Loading...</p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-3">Loading rankings...</p>
+    </div>
 }
 else if (!ranks.Any())
 {
-    <div class="alert alert-warning">No data available.</div>
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-body p-5 text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📊</div>
+            <h5 class="text-muted fw-semibold">No Data Available</h5>
+            <p class="text-muted">No rankings data for this period</p>
+        </div>
+    </div>
 }
 else
 {
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-header premium-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">🏅 Top Rankings</h5>
+                <span class="badge bg-light text-dark">@ranks.Count</span>
+            </div>
+        </div>
+
+        <div class="table-responsive premium-table-container">
+            <table class="table premium-table align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>Rank</th>
+                        <th style="width: 100px;">Rank</th>
                         <th>User</th>
                         <th>Email</th>
-                        <th>Coins</th>
+                        <th class="text-end">Coins</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach (var r in ranks)
                     {
-                        <tr>
-                            <td class="fw-bold">
-                                @if (r.RankPosition == 1)
-                                {
-                                    <span>🥇</span>
-                                }
-                                else if (r.RankPosition == 2)
-                                {
-                                    <span>🥈</span>
-                                }
-                                else if (r.RankPosition == 3)
-                                {
-                                    <span>🥉</span>
-                                }
-                                else
-                                {
-                                    <span>#@r.RankPosition</span>
-                                }
+                        <tr class="premium-row">
+                            <td>
+                                <div class="rank-medal">
+                                    @if (r.RankPosition == 1)
+                                    {
+                                        <span class="medal-emoji medal-gold">🥇</span>
+                                        <span class="medal-text">Gold</span>
+                                    }
+                                    else if (r.RankPosition == 2)
+                                    {
+                                        <span class="medal-emoji medal-silver">🥈</span>
+                                        <span class="medal-text">Silver</span>
+                                    }
+                                    else if (r.RankPosition == 3)
+                                    {
+                                        <span class="medal-emoji medal-bronze">🥉</span>
+                                        <span class="medal-text">Bronze</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rank-number">#@r.RankPosition</span>
+                                    }
+                                </div>
                             </td>
 
                             <td>
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-items-center gap-2">
                                     @if (!string.IsNullOrWhiteSpace(r.ProfileImage))
                                     {
                                         <img src="@r.ProfileImage"
-                                             class="rounded-circle me-2"
-                                             style="width:40px;height:40px"
-                                             />
+                                             class="rounded-circle"
+                                             style="width:40px;height:40px;object-fit:cover;"
+                                             alt="@r.Name" />
                                     }
                                     <strong>@r.Name</strong>
                                 </div>
                             </td>
 
-                            <td>@r.Email</td>
-
                             <td>
-                                <span class="badge bg-success fs-6">
-                                    @r.TotalCoins
-                                </span>
+                                <a href="mailto:@r.Email" class="text-primary">@r.Email</a>
+                            </td>
+
+                            <td class="text-end">
+                                <span class="coins-badge">@r.TotalCoins</span>
                             </td>
                         </tr>
                     }
@@ -311,3 +344,339 @@ else
         await LoadBySelectedMonth();
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Premium Input */
+    .premium-input {
+        border: 2px solid #e8ecf1;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #f8fafc;
+    }
+
+    .premium-input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Month Button Group */
+    .month-button-group {
+        padding: 0.5rem 0;
+    }
+
+    .month-btn {
+        min-width: 60px;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #e5e7eb;
+    }
+
+    .month-btn-active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .month-btn-active:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .month-btn-inactive {
+        background-color: white;
+        color: #1f2937;
+        border-color: #e5e7eb;
+    }
+
+    .month-btn-inactive:hover {
+        background-color: #f9fafb;
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    /* Status Message */
+    .status-message {
+        padding: 0.75rem 1rem;
+        background-color: #f0f4ff;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+
+    /* Button Group */
+    .button-group {
+        gap: 1rem;
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .btn-premium-warning {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-premium-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-premium-warning:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 700px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    /* Rank Medal */
+    .rank-medal {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+    }
+
+    .medal-emoji {
+        font-size: 1.5rem;
+        display: inline-block;
+    }
+
+    .medal-gold {
+        color: #fbbf24;
+        text-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+    }
+
+    .medal-silver {
+        color: #d1d5db;
+        text-shadow: 0 0 4px rgba(209, 213, 219, 0.5);
+    }
+
+    .medal-bronze {
+        color: #b87537;
+        text-shadow: 0 0 4px rgba(184, 117, 55, 0.5);
+    }
+
+    .medal-text {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .rank-number {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Coins Badge */
+    .coins-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        color: white;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .month-btn {
+            min-width: 50px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-premium-primary,
+        .btn-premium-secondary,
+        .btn-premium-warning {
+            width: 100%;
+            padding: 10px 16px;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .premium-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>

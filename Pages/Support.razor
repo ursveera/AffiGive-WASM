@@ -3,67 +3,107 @@
 @using WASM.api
 @inject ISupportApi SupportApi
 
-<h3 class="mb-3">💬 Support Manager</h3>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">💬 Support Manager</h1>
+    <p class="text-muted">Manage customer support conversations</p>
+</div>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header fw-semibold">Users</div>
+<div class="row g-4">
+    <!-- Users List Sidebar -->
+    <div class="col-lg-4">
+        <div class="card premium-card shadow-lg border-0">
+            <div class="card-header premium-header">
+                <h5 class="mb-0">👥 Users</h5>
+            </div>
 
-            <ul class="list-group list-group-flush"
-                style="max-height:500px;overflow-y:auto;">
-                @foreach (var u in userList)
-                {
-                    <li class="list-group-item list-group-item-action
-                            @(selectedUser == u ? "active" : "")"
-                        @onclick="() => SelectUser(u)">
-                        👤 @u
-                    </li>
-                }
-            </ul>
+            <div class="users-list-container premium-table-container">
+                <ul class="list-group list-group-flush">
+                    @if (!userList.Any())
+                    {
+                        <li class="list-group-item text-center text-muted py-4">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
+                            <small>No users yet</small>
+                        </li>
+                    }
+                    else
+                    {
+                        @foreach (var u in userList)
+                        {
+                            <li class="list-group-item user-item @(selectedUser == u ? "active" : "")"
+                                @onclick="() => SelectUser(u)">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="user-avatar">👤</span>
+                                    <span class="user-name">@u</span>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-8">
+    <!-- Conversation Area -->
+    <div class="col-lg-8">
         @if (selectedUser == null)
         {
-            <div class="alert alert-info">
-                Select a user to view conversation
+            <div class="card premium-card shadow-lg border-0">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center" style="min-height: 500px;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">💬</div>
+                    <h5 class="text-muted fw-semibold">No Conversation Selected</h5>
+                    <p class="text-muted">Select a user from the list to view their conversation</p>
+                </div>
             </div>
         }
         else
         {
-            <div class="card shadow-sm">
-                <div class="card-header fw-semibold">
-                    Conversation – @selectedUser
+            <div class="card premium-card shadow-lg border-0 d-flex flex-column" style="height: 600px;">
+                <div class="card-header premium-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size: 1.5rem;">👤</span>
+                        <h5 class="mb-0">Conversation – @selectedUser</h5>
+                    </div>
                 </div>
 
-                <div class="card-body"
-                     style="max-height:420px;overflow-y:auto;">
-                    @foreach (var msg in messages)
+                <div class="conversation-container flex-grow-1" style="overflow-y: auto; padding: 1.5rem;">
+                    @if (!messages.Any())
                     {
-                        <div class="mb-2 text-@(msg.IsFromUser ? "start" : "end")">
-                            <span class="badge @(msg.IsFromUser ? "bg-secondary" : "bg-primary")">
-                                @(msg.IsFromUser ? "User" : "Admin")
-                            </span>
-                            <div class="mt-1 p-2 rounded
-                                        @(msg.IsFromUser ? "bg-light" : "bg-primary text-white")">
-                                @msg.Message
-                            </div>
+                        <div class="text-center text-muted py-4">
+                            <p>No messages yet</p>
                         </div>
+                    }
+                    else
+                    {
+                        @foreach (var msg in messages)
+                        {
+                            <div class="message-row @(msg.IsFromUser ? "user-message" : "admin-message") mb-3">
+                                <div class="message-badge">
+                                    <span class="badge @(msg.IsFromUser ? "bg-secondary" : "bg-gradient-primary")">
+                                        @(msg.IsFromUser ? "👤 User" : "🛡️ Admin")
+                                    </span>
+                                </div>
+                                <div class="message-bubble @(msg.IsFromUser ? "user-bubble" : "admin-bubble")">
+                                    @msg.Message
+                                </div>
+                            </div>
+                        }
                     }
                 </div>
 
-                <div class="card-footer d-flex">
-                    <input class="form-control me-2"
-                           placeholder="Type reply..."
-                           @bind="replyText"
-                           @bind:event="oninput" />
+                <div class="card-footer bg-light border-top">
+                    <div class="d-flex gap-2">
+                        <input class="form-control premium-input"
+                               placeholder="Type your reply..."
+                               @bind="replyText"
+                               @bind:event="oninput"
+                               style="border-radius: 8px; padding: 10px 14px;" />
 
-                    <button class="btn btn-primary"
-                            @onclick="SendReply">
-                        Send
-                    </button>
+                        <button class="btn btn-premium-primary"
+                                style="padding: 10px 20px;"
+                                @onclick="SendReply">
+                            <span class="btn-icon">📤</span> Send
+                        </button>
+                    </div>
                 </div>
             </div>
         }
@@ -105,3 +145,273 @@
         replyText = "";
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Users List */
+    .users-list-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .list-group {
+        border: none;
+    }
+
+    .user-item {
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.75rem 1rem !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .user-item:last-child {
+        border-bottom: none;
+    }
+
+    .user-item:hover {
+        background-color: #f0f4ff;
+    }
+
+    .user-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .user-item.active .user-name {
+        font-weight: 600;
+    }
+
+    .user-avatar {
+        font-size: 1.2rem;
+    }
+
+    .user-name {
+        color: #1f2937;
+        transition: color 0.2s ease;
+    }
+
+    .user-item.active .user-name {
+        color: white;
+    }
+
+    /* Conversation Container */
+    .conversation-container {
+        background-color: #f9fafb;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .conversation-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .conversation-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .conversation-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .conversation-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Messages */
+    .message-row {
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-message {
+        align-items: flex-start;
+    }
+
+    .admin-message {
+        align-items: flex-end;
+    }
+
+    .message-badge {
+        margin-bottom: 0.5rem;
+    }
+
+    .message-badge .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .message-bubble {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        max-width: 80%;
+        word-wrap: break-word;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .user-bubble {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        border-bottom-left-radius: 4px;
+    }
+
+    .admin-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Premium Input */
+    .premium-input {
+        border: 2px solid #e8ecf1;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: white;
+    }
+
+    .premium-input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .premium-input::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 10px 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-icon {
+        margin-right: 6px;
+    }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .row {
+            flex-direction: column;
+        }
+
+        .col-lg-4,
+        .col-lg-8 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        .message-bubble {
+            max-width: 100%;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .users-list-container {
+            max-height: 400px;
+        }
+
+        .message-bubble {
+            font-size: 0.9rem;
+            padding: 0.6rem 0.85rem;
+        }
+
+        .btn-premium-primary {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+        }
+    }
+</style>

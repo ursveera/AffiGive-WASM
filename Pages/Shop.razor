@@ -3,40 +3,44 @@
 @using SharedLib.Models
 @inject IShopApi ShopApi
 
-<h3 class="mb-3">🛒 Shop Manager</h3>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">🛒 Shop Manager</h1>
+    <p class="text-muted">Manage shop items and rewards</p>
+</div>
 
-<input class="form-control mb-3"
-       placeholder="Search item..."
-       @bind="searchText"
-       @bind:event="oninput" />
+<div class="search-container mb-4">
+    <input class="form-control form-control-lg premium-input"
+           placeholder="🔍 Search by item name or ID..."
+           @bind="searchText"
+           @bind:event="oninput" />
+</div>
 
-<div class="card shadow-sm border-0">
-
-    <div class="card-header bg-white fw-semibold py-3 border-bottom">
-        Shop Items
+<div class="card premium-card shadow-lg border-0 mb-4">
+    <div class="card-header premium-header">
+        <h5 class="mb-0">📋 Shop Items</h5>
     </div>
 
-    <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
-        <table class="table table-hover align-middle mb-0">
-
-            <thead class="table-light position-sticky top-0">
+    <div class="table-responsive premium-table-container">
+        <table class="table premium-table align-middle mb-0">
+            <thead>
                 <tr>
                     <th>ID</th>
                     <th>Name</th>
                     <th>Icon</th>
                     <th>Price</th>
                     <th>Reward</th>
-                    <th class="text-end">Actions</th>
+                    <th class="text-end" style="width: 150px;">Actions</th>
                 </tr>
             </thead>
 
             <tbody>
-
                 @if (!filteredItems.Any())
                 {
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
-                            🚫 No shop items
+                    <tr class="empty-state">
+                        <td colspan="6" class="text-center py-5">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🛍️</div>
+                            <h5 class="text-muted fw-semibold">No Shop Items Found</h5>
+                            <p class="text-muted">Create your first shop item to get started</p>
                         </td>
                     </tr>
                 }
@@ -44,121 +48,124 @@
                 {
                     @foreach (var item in filteredItems)
                     {
-                        <tr>
-
+                        <tr class="premium-row">
                             <td>
-                                <strong>@item.Id</strong>
+                                <span class="badge bg-gradient-primary">@item.Id</span>
                             </td>
 
-                            <td>@item.Name</td>
-
-                            <td>@item.Icon</td>
+                            <td>
+                                <span class="fw-semibold">@item.Name</span>
+                            </td>
 
                             <td>
-                                <span class="badge bg-info">
+                                <span style="font-size: 1.5rem;">@item.Icon</span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-info text-white">
                                     @item.Price
                                 </span>
                             </td>
 
                             <td>
-                                <span class="badge bg-success">
+                                <span class="badge bg-success text-white">
                                     +@item.Reward
                                 </span>
                             </td>
 
                             <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-icon-primary"
+                                            title="Edit Item"
+                                            @onclick="() => EditItem(item)">
+                                        ✏️
+                                    </button>
 
-                                <button class="btn btn-outline-primary btn-sm me-1"
-                                        @onclick="() => EditItem(item)">
-                                    ✏️ Edit
-                                </button>
-
-                                <button class="btn btn-outline-danger btn-sm"
-                                        @onclick="() => DeleteItem(item.Id)">
-                                    🗑 Delete
-                                </button>
-
+                                    <button class="btn btn-sm btn-icon-danger"
+                                            title="Delete Item"
+                                            @onclick="() => DeleteItem(item.Id)">
+                                        🗑
+                                    </button>
+                                </div>
                             </td>
-
                         </tr>
                     }
                 }
-
             </tbody>
-
         </table>
     </div>
-
 </div>
 
-
-<div class="card shadow-sm border-0 mt-4">
-
-    <div class="card-header bg-white fw-semibold py-3 border-bottom">
-        @(isEditMode ? "✏️ Edit Item" : "➕ Create Item")
+<div class="card premium-card shadow-lg border-0">
+    <div class="card-header premium-header">
+        <h5 class="mb-0">@(isEditMode ? "✏️ Edit Item" : "➕ Create Item")</h5>
     </div>
 
-    <div class="card-body">
-
-        <div class="row g-3">
+    <div class="card-body p-4">
+        <div class="row g-4">
 
             <div class="col-md-4">
-                <label class="form-label">Id</label>
-                <input class="form-control" @bind="itemModel.Id" />
+                <label class="form-label fw-semibold">Item ID</label>
+                <input class="form-control premium-input" 
+                       @bind="itemModel.Id"
+                       placeholder="unique-item-id" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Name</label>
-                <input class="form-control" @bind="itemModel.Name" />
+                <label class="form-label fw-semibold">Item Name</label>
+                <input class="form-control premium-input" 
+                       @bind="itemModel.Name"
+                       placeholder="Item name..." />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Icon</label>
-                <input class="form-control" @bind="itemModel.Icon" />
+                <label class="form-label fw-semibold">Icon Emoji</label>
+                <input class="form-control premium-input" 
+                       @bind="itemModel.Icon"
+                       placeholder="🎁" />
             </div>
 
             <div class="col-md-3">
-                <label class="form-label">Price</label>
+                <label class="form-label fw-semibold">Price</label>
                 <input type="number"
-                       class="form-control"
-                       @bind="itemModel.Price" />
+                       class="form-control premium-input"
+                       @bind="itemModel.Price"
+                       placeholder="0" />
             </div>
 
             <div class="col-md-3">
-                <label class="form-label">Reward</label>
+                <label class="form-label fw-semibold">Reward</label>
                 <input type="number"
-                       class="form-control"
-                       @bind="itemModel.Reward" />
+                       class="form-control premium-input"
+                       @bind="itemModel.Reward"
+                       placeholder="0" />
             </div>
 
-            <div class="col-12 mt-3">
+            <div class="col-12">
+                <div class="button-group d-flex gap-3 mt-2">
+                    @if (isEditMode)
+                    {
+                        <button class="btn btn-lg btn-premium-warning"
+                                @onclick="UpdateItem">
+                            <span class="btn-icon">💾</span> Update Item
+                        </button>
 
-                @if (isEditMode)
-                {
-                    <button class="btn btn-warning me-2"
-                            @onclick="UpdateItem">
-                        💾 Update
-                    </button>
-
-                    <button class="btn btn-secondary"
-                            @onclick="CancelEdit">
-                        ❌ Cancel
-                    </button>
-                }
-                else
-                {
-                    <button class="btn btn-primary"
-                            @onclick="CreateItem">
-                        ➕ Create Item
-                    </button>
-                }
-
+                        <button class="btn btn-lg btn-premium-secondary"
+                                @onclick="CancelEdit">
+                            <span class="btn-icon">❌</span> Cancel
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-lg btn-premium-primary"
+                                @onclick="CreateItem">
+                            <span class="btn-icon">➕</span> Create Item
+                        </button>
+                    }
+                </div>
             </div>
-
         </div>
-
     </div>
-
 </div>
 
 
@@ -244,3 +251,282 @@
         await LoadItems();
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Search Container */
+    .search-container {
+        position: relative;
+    }
+
+    .premium-input {
+        border: 2px solid #e8ecf1;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #f8fafc;
+    }
+
+    .premium-input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .premium-input::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    .empty-state {
+        background-color: #f9fafb;
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+    }
+
+    /* Button Icons */
+    .btn-icon-primary,
+    .btn-icon-danger {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        border: none;
+    }
+
+    .btn-icon-primary {
+        background-color: #dbeafe;
+        color: #0369a1;
+    }
+
+    .btn-icon-primary:hover {
+        background-color: #bfdbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
+    }
+
+    .btn-icon-danger {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-icon-danger:hover {
+        background-color: #fecaca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .btn-premium-warning {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-premium-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-premium-warning:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+
+    .button-group {
+        margin-top: 1rem;
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .btn-icon-primary,
+        .btn-icon-danger {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn-premium-primary,
+        .btn-premium-secondary,
+        .btn-premium-warning {
+            width: 100%;
+        }
+
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+    }
+</style>

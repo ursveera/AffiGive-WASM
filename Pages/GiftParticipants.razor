@@ -9,38 +9,67 @@
 @inject IUserApi UserApi
 @inject NavigationManager Nav
 
-<h3 class="mb-3">👥 Gift Participants</h3>
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="display-5 fw-bold mb-2">👥 Gift Participants</h1>
+            <p class="text-muted">Manage and view participants who joined this gift</p>
+        </div>
+        @if (GiftId.HasValue)
+        {
+            <button class="btn btn-lg btn-premium-primary" @onclick="() => ViewGiftDetails()">
+                🎁 View Gift Details
+            </button>
+        }
+    </div>
+</div>
 
 @if (participants == null)
 {
-    <p class="text-muted">Loading...</p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-3">Loading participants...</p>
+    </div>
 }
 else if (!participants.Any())
 {
-    <div class="alert alert-warning">
-        No users joined this gift yet.
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-body p-5 text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🚫</div>
+            <h5 class="text-muted fw-semibold">No Participants Yet</h5>
+            <p class="text-muted">No users have joined this gift yet</p>
+        </div>
     </div>
 }
 else
 {
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-header premium-header">
+            <h5 class="mb-0">📋 Participants List</h5>
+        </div>
+
+        <div class="table-responsive premium-table-container">
+            <table class="table premium-table align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>#</th>
+                        <th style="width: 60px;">#</th>
                         <th>User</th>
                         <th>Joined At</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var (item, index) in participants.Select((v, i) => (v, i + 1)))
                     {
-                        <tr>
-                            <td>@index</td>
+                        <tr class="premium-row">
+                            <td>
+                                <span class="badge bg-gradient-primary">@index</span>
+                            </td>
 
                             <td>
-                                <button class="btn btn-link text-start p-0"
+                                <button class="btn btn-link text-start p-0 user-link"
                                         @onclick="async () => await OpenUser(item.UserId, GiftId)">
 
                                     <div class="fw-semibold">
@@ -56,7 +85,17 @@ else
                                 </button>
                             </td>
 
-                            <td>@item.JoinedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>
+                                <span class="text-muted">@item.JoinedAt.ToString("dd MMM yyyy HH:mm")</span>
+                            </td>
+
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-icon-danger"
+                                        title="Delete Participant"
+                                        @onclick="() => DeleteParticipant(item.UserId)">
+                                    🗑
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -65,81 +104,253 @@ else
     </div>
 }
 
-<button class="btn btn-secondary mt-3" @onclick="GoBack">
-    🔙 Back
+<button class="btn btn-lg btn-premium-secondary mt-4" @onclick="GoBack">
+    🔙 Back to Gifts
 </button>
+
+@* ===========================
+   GIFT DETAILS MODAL
+=========================== *@
+@if (selectedGift != null || isGiftLoading)
+{
+    <div class="premium-modal-backdrop">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content premium-modal">
+
+                    <div class="modal-header premium-modal-header">
+                        <h5 class="modal-title fw-bold">🎁 Gift Information</h5>
+                        <button class="btn-close btn-close-white" @onclick="CloseGiftModal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        @if (isGiftLoading)
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-3">Loading gift details...</p>
+                            </div>
+                        }
+                        else if (selectedGift != null)
+                        {
+                            <div class="row g-4">
+
+                                <div class="col-md-4 text-center">
+                                    @if (!string.IsNullOrWhiteSpace(selectedGift.Image))
+                                    {
+                                        <div class="gift-image-container mb-3">
+                                            <img src="@selectedGift.Image"
+                                                 class="rounded shadow"
+                                                 style="width:120px;height:120px;object-fit:cover;border:4px solid #667eea" />
+                                        </div>
+                                    }
+
+                                    <h6 class="fw-bold">@selectedGift.Provider</h6>
+
+                                    <span class="badge @(selectedGift.IsActive ? "bg-gradient-primary" : "bg-danger") mt-2">
+                                        @(selectedGift.IsActive ? "✓ Active" : "✗ Inactive")
+                                    </span>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <div class="user-info">
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Prize Pool</label>
+                                            <p class="info-value">@selectedGift.PrizePoolText</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Winners</label>
+                                            <p class="info-value">@selectedGift.WinnerText</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Coins Required</label>
+                                            <p class="info-value">@selectedGift.CoinsRequired</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Slots</label>
+                                            <p class="info-value">@selectedGift.RemainingSlots / @selectedGift.TotalSlots</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Code</label>
+                                            <p class="info-value"><code>@selectedGift.Code</code></p>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">From Date</label>
+                                                    <p class="info-value">@selectedGift.FromDate.ToString("dd MMM yyyy")</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">To Date</label>
+                                                    <p class="info-value">@selectedGift.ToDate.ToString("dd MMM yyyy")</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Group ID</label>
+                                            <p class="info-value">@selectedGift.GroupId</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="modal-footer bg-light">
+
+                        @if (selectedGift != null)
+                        {
+                            <button class="btn btn-danger"
+                                    @onclick="SoftDeleteGift">
+                                🗑 Soft Delete
+                            </button>
+                        }
+
+                        <button class="btn btn-premium-secondary" @onclick="CloseGiftModal">
+                            Close
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @* ===========================
    USER DETAILS MODAL
 =========================== *@
 @if (selectedUser != null || isUserLoading)
 {
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.6)">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
+    <div class="premium-modal-backdrop">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content premium-modal">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">👤 User Information</h5>
-                    <button class="btn-close" @onclick="CloseModal"></button>
-                </div>
+                    <div class="modal-header premium-modal-header">
+                        <h5 class="modal-title fw-bold">👤 User Information</h5>
+                        <button class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                    </div>
 
-                <div class="modal-body">
+                    <div class="modal-body">
 
-                    @if (isUserLoading)
-                    {
-                        <p class="text-muted">Loading user details...</p>
-                    }
-                    else if (selectedUser != null)
-                    {
-                        <div class="row g-3">
-
-                            <div class="col-md-4 text-center">
-                                <img src="@selectedUser.ProfileImage"
-                                     class="rounded-circle shadow"
-                                     style="width:110px;height:110px;object-fit:cover" />
-
-                                <h6 class="mt-2">@selectedUser.Name</h6>
-
-                                <span class="badge bg-success">
-                                    @selectedUser.AccountStatus
-                                </span>
+                        @if (isUserLoading)
+                        {
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-3">Loading user details...</p>
                             </div>
+                        }
+                        else if (selectedUser != null)
+                        {
+                            <div class="row g-4">
 
-                            <div class="col-md-8">
+                                <div class="col-md-4 text-center">
+                                    <div class="user-avatar mb-3">
+                                        <img src="@selectedUser.ProfileImage"
+                                             class="rounded-circle shadow"
+                                             style="width:120px;height:120px;object-fit:cover;border:4px solid #667eea" />
+                                    </div>
 
-                                <p><b>User ID:</b> @selectedUser.Id</p>
-                                <p><b>Email:</b> @selectedUser.Email</p>
-                                <p><b>Phone:</b> @selectedUser.Phone</p>
-                                <p><b>Nickname:</b> @selectedUser.NickName</p>
-                                <p><b>Invite Code:</b> @selectedUser.InviteCode</p>
-                                <p><b>Invited By:</b> @selectedUser.InvitedByUserId</p>
-                                <p><b>Address:</b> @selectedUser.Address</p>
-                                <p><b>Created:</b> @selectedUser.CreatedAt.ToString("dd MMM yyyy")</p>
-                                <p><b>Last Login:</b> @selectedUser.LastLogin.ToString("dd MMM yyyy HH:mm")</p>
+                                    <h6 class="fw-bold">@selectedUser.Name</h6>
+
+                                    <span class="badge bg-gradient-primary mt-2">
+                                        @selectedUser.AccountStatus
+                                    </span>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <div class="user-info">
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">User ID</label>
+                                            <p class="info-value">@selectedUser.Id</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Email</label>
+                                            <p class="info-value">@selectedUser.Email</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Phone</label>
+                                            <p class="info-value">@selectedUser.Phone</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Nickname</label>
+                                            <p class="info-value">@selectedUser.NickName</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Invite Code</label>
+                                            <p class="info-value"><code>@selectedUser.InviteCode</code></p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Invited By</label>
+                                            <p class="info-value">@selectedUser.InvitedByUserId</p>
+                                        </div>
+
+                                        <div class="info-item mb-3">
+                                            <label class="info-label">Address</label>
+                                            <p class="info-value text-wrap">@selectedUser.Address</p>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Created</label>
+                                                    <p class="info-value">@selectedUser.CreatedAt.ToString("dd MMM yyyy")</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="info-item">
+                                                    <label class="info-label">Last Login</label>
+                                                    <p class="info-value">@selectedUser.LastLogin.ToString("dd MMM yyyy HH:mm")</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                             </div>
+                        }
 
-                        </div>
-                    }
+                    </div>
 
-                </div>
+                    <div class="modal-footer bg-light">
 
-                <div class="modal-footer justify-content-between">
+                        @if (selectedUser != null)
+                        {
+                            <button class="btn btn-premium-primary"
+                                    @onclick="GoToCoinHistory">
+                                🪙 Coin History
+                            </button>
+                        }
 
-                    @if (selectedUser != null)
-                    {
-                        <button class="btn btn-primary"
-                                @onclick="GoToCoinHistory">
-                            🪙 Coin History
+                        <button class="btn btn-premium-secondary" @onclick="CloseModal">
+                            Close
                         </button>
-                    }
 
-                    <button class="btn btn-secondary" @onclick="CloseModal">
-                        Close
-                    </button>
+                    </div>
 
                 </div>
-
             </div>
         </div>
     </div>
@@ -154,6 +365,9 @@ else
 
     private User? selectedUser;
     private bool isUserLoading = false;
+
+    private GiftMaster? selectedGift;
+    private bool isGiftLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -196,4 +410,374 @@ else
         // ⭐ Navigate to coin history page
         Nav.NavigateTo($"/admin/users/{selectedUser.Id}");
     }
+
+    // ⭐ Gift Details Methods
+    private async Task ViewGiftDetails()
+    {
+        if (!GiftId.HasValue)
+            return;
+
+        isGiftLoading = true;
+        selectedGift = null;
+
+        try
+        {
+            // Load gift details
+            var allGifts = await GiftApi.GetAllAsync();
+            selectedGift = allGifts?.FirstOrDefault(g => g.Id == GiftId.Value);
+        }
+        finally
+        {
+            isGiftLoading = false;
+        }
+    }
+
+    private void CloseGiftModal()
+    {
+        selectedGift = null;
+    }
+
+    private async Task SoftDeleteGift()
+    {
+        if (selectedGift == null)
+            return;
+
+        // Soft delete the gift
+        await GiftApi.DeleteAsync(selectedGift.Id);
+
+        // Close modal and go back
+        CloseGiftModal();
+        GoBack();
+    }
+
+    // ⭐ Delete Participant
+    private async Task DeleteParticipant(string userId)
+    {
+        if (!GiftId.HasValue)
+            return;
+
+        // Call API to remove participant
+        await GiftApi.DeleteParticipantAsync(GiftId.Value, userId);
+
+        // Reload participants list
+        participants = await GiftApi.GetParticipantsByGiftIdAsync(GiftId.Value);
+    }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+    }
+
+    /* User Link */
+    .user-link {
+        color: #1f2937;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .user-link:hover {
+        color: #667eea;
+    }
+
+    .user-link:hover .fw-semibold {
+        color: #667eea;
+    }
+
+    /* Modal Styling */
+    .premium-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .premium-modal {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .premium-modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+
+    .premium-modal .modal-body {
+        padding: 2rem;
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    .premium-modal .modal-footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        background-color: #f9fafb;
+    }
+
+    /* User Avatar */
+    .user-avatar {
+        transition: transform 0.3s ease;
+    }
+
+    .user-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    /* Gift Image Container */
+    .gift-image-container {
+        transition: transform 0.3s ease;
+    }
+
+    .gift-image-container:hover {
+        transform: scale(1.05);
+    }
+
+    /* Delete Button */
+    .btn-icon-danger {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        border: none;
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-icon-danger:hover {
+        background-color: #fecaca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    /* User Info */
+    .user-info .info-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+
+    .user-info .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: block;
+        font-weight: 700;
+        color: #667eea;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    .info-value code {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .btn-premium-primary,
+        .btn-premium-secondary {
+            width: 100%;
+        }
+    }
+</style>

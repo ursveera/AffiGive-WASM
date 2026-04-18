@@ -1,0 +1,1287 @@
+﻿@page "/admin/allgameconfig"
+@using SharedLib.Models
+@using WASM.Api
+@using System.Linq
+@using System.ComponentModel.DataAnnotations
+@inject IGameConfigApi Api
+
+<link href="css/game-config.css" rel="stylesheet" />
+
+<div class="game-config-container">
+    <div class="page-header">
+        <h1>🎮 Game Config Manager</h1>
+        <p class="header-subtitle">Manage all game configurations and settings</p>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-lg"></div>
+            <p>Loading configuration...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert-banner alert-error">
+            <span class="alert-icon">❌</span>
+            <div class="alert-content">
+                <strong>Error</strong>
+                <p>@error</p>
+            </div>
+            <button class="alert-close" @onclick="() => error = null">×</button>
+        </div>
+    }
+    else if (config == null)
+    {
+        <div class="alert-banner alert-warning">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+                <strong>Warning</strong>
+                <p>Configuration not found.</p>
+            </div>
+        </div>
+    }
+else
+{
+    <!-- SUCCESS NOTIFICATIONS -->
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="toast-notification toast-success">
+            <span class="toast-icon">✓</span>
+            <span>@successMessage</span>
+        </div>
+    }
+
+    <!-- ADS CONFIGURATION -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>📺 Ads Configuration</h2>
+                <p>Manage advertisement settings for Live and Test modes</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-section">
+                <label class="form-label">Ads Mode</label>
+                <select class="form-select" @bind="config.AdsConfiguration.Mode">
+                    <option value="Live">🔴 Live</option>
+                    <option value="Test">🟡 Test</option>
+                </select>
+            </div>
+
+            @{
+                var ads = config.AdsConfiguration?.Mode == "Test"
+                ? config.AdsConfiguration?.Test
+                : config.AdsConfiguration?.Live;
+            }
+
+            @if (ads != null)
+            {
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Banner Ad Unit ID</label>
+                        <input type="text" class="form-input" @bind="ads.BannerAdUnitId" placeholder="ca-app-pub-xxxxx" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Interstitial Ad Unit ID</label>
+                        <input type="text" class="form-input" @bind="ads.InterstitialAdUnitId" placeholder="ca-app-pub-xxxxx" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rewarded Ad Unit ID</label>
+                        <input type="text" class="form-input" @bind="ads.RewardedAdUnitId" placeholder="ca-app-pub-xxxxx" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rewarded Interstitial ID</label>
+                        <input type="text" class="form-input" @bind="ads.RewardedInterstitialAdUnitId" placeholder="ca-app-pub-xxxxx" />
+                    </div>
+                </div>
+            }
+
+            <div class="card-actions">
+                <button class="btn btn-primary" @onclick="SaveAds" disabled="@isAdsLoading">
+                    @if (isAdsLoading)
+                    {
+                        <span class="spinner-sm"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>💾 Save Ads</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COINS CONFIGURATION -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>🪙 Coins Configuration</h2>
+                <p>Configure coin rewards and multipliers</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Daily Reward</label>
+                    <input type="number" class="form-input" @bind="config.CoinConfiguration.dailyReward" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Enemy Hit Penalty</label>
+                    <input type="number" class="form-input" @bind="config.CoinConfiguration.enemyHitPenalty" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Level Reward Bonus</label>
+                    <input type="number" class="form-input" @bind="config.CoinConfiguration.levelRewardBonus" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Coin To Lose</label>
+                    <input type="number" class="form-input" @bind="config.CoinConfiguration.cointoLose" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ad Multiplier</label>
+                    <input type="number" step="0.1" class="form-input" @bind="config.CoinConfiguration.adRewardMultiplier" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">2x Multiplier</label>
+                    <input type="number" step="0.1" class="form-input" @bind="config.CoinConfiguration.rewardMultiplier2x" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">3x Multiplier</label>
+                    <input type="number" step="0.1" class="form-input" @bind="config.CoinConfiguration.rewardMultiplier3x" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">10x Multiplier</label>
+                    <input type="number" step="0.1" class="form-input" @bind="config.CoinConfiguration.rewardMultiplier10x" min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reward Type</label>
+                    <input type="text" class="form-input" @bind="config.CoinConfiguration.rewardType" placeholder="e.g., 'coin', 'premium'" />
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn btn-primary" @onclick="SaveCoins" disabled="@isCoinsLoading">
+                    @if (isCoinsLoading)
+                    {
+                        <span class="spinner-sm"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>💾 Save Coins</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP CONFIGURATION -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>⚙️ App Configuration</h2>
+                <p>Configure application settings and URLs</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">API Base URL</label>
+                    <input type="url" class="form-input" @bind="config.Config.api_base_url" placeholder="https://api.example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Back URL</label>
+                    <input type="url" class="form-input" @bind="config.Config.backUrl" placeholder="https://back.example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Back Live</label>
+                    <input type="url" class="form-input" @bind="config.Config.backLive" placeholder="https://back-live.example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Game Version</label>
+                    <input type="text" class="form-input" @bind="config.Config.game_version" placeholder="e.g., 1.0.0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Min Version</label>
+                    <input type="text" class="form-input" @bind="config.Config.min_game_version" placeholder="e.g., 1.0.0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Latest Version</label>
+                    <input type="text" class="form-input" @bind="config.Config.latest_game_version" placeholder="e.g., 1.0.0" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Terms & Conditions URL</label>
+                    <input type="url" class="form-input" @bind="config.Config.tc_url" placeholder="https://example.com/tc" />
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="config.Config.maintenance_mode" />
+                        <span>🔧 Maintenance Mode</span>
+                    </label>
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" @bind="config.Config.force_update" />
+                        <span>🔄 Force Update</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- NOTIFICATION DATA SECTION -->
+            <div class="notification-section">
+                <h3>📢 Notification Settings</h3>
+                <p class="section-subtitle">Configure in-app notification message</p>
+
+                @if (config.Config != null)
+                {
+                    <!-- Current Status Display -->
+                    <div class="notification-status">
+                        <div class="status-item">
+                            <span class="status-label">Status:</span>
+                            <span class="status-value @(config.Config.notification?.enabled == true ? "status-enabled" : "status-disabled")">
+                                @(config.Config.notification?.enabled == true ? "🔔 Enabled" : "🔕 Disabled")
+                            </span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Message Length:</span>
+                            <span class="status-value">@(config.Config.notification?.message?.Length ?? 0) characters</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="config.Config.notification.enabled" />
+                                <span>🔔 Enable Notification</span>
+                            </label>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Notification Message</label>
+                            <textarea class="form-input textarea-input" 
+                                      @bind="config.Config.notification.message"
+                                      @bind:event="oninput"
+                                      placeholder="Enter your notification message here..."
+                                      rows="4"></textarea>
+                            <div class="field-hint">@(config.Config.notification?.message?.Length ?? 0) / 500 characters</div>
+                        </div>
+                    </div>
+
+                    <!-- Message Preview -->
+                    @if (!string.IsNullOrEmpty(config.Config.notification?.message))
+                    {
+                        <div class="notification-preview">
+                            <h4>📝 Preview</h4>
+                            <div class="preview-box">
+                                <p>@config.Config.notification.message</p>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="section-subtitle">Notification data loading...</p>
+                }
+            </div>
+
+            <div class="card-actions">
+                <button class="btn btn-primary" @onclick="SaveApp" disabled="@isAppLoading">
+                    @if (isAppLoading)
+                    {
+                        <span class="spinner-sm"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>💾 Save Config</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME TIME -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>⏱️ Game Time Settings</h2>
+                <p>Configure game duration parameters</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Level 1 Duration (seconds)</label>
+                    <input type="number" step="0.1" class="form-input" @bind="config.GameTimeManager.Level1_Duration" min="0" />
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn btn-primary" @onclick="SaveGameTime" disabled="@isGameTimeLoading">
+                    @if (isGameTimeLoading)
+                    {
+                        <span class="spinner-sm"></span>
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>💾 Save</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARACTERS -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>🧑 Characters</h2>
+                <p>Manage game characters and unlocks</p>
+            </div>
+            <button class="btn btn-success btn-sm" @onclick="NewCharacter">+ Add Character</button>
+        </div>
+        <div class="card-body">
+            @if (config.CharacterConfiguration != null && config.CharacterConfiguration.Any())
+            {
+                <div class="items-list">
+                    @foreach (var c in config.CharacterConfiguration ?? Enumerable.Empty<CharacterConfiguration>())
+                    {
+                        if (c == null) continue;
+
+                        <div class="list-item">
+                            <div class="item-info">
+                                <h4>@(c.Name ?? "Unnamed")</h4>
+                                <p class="item-meta">Version: <strong>@c.Version</strong> | Unlock: <strong>@c.UnlockCoins</strong> 🪙</p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-sm btn-warning" @onclick="() => EditCharacter(c)">✏️ Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteCharacter(c)">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-state">No characters configured yet. Click "Add Character" to get started.</p>
+            }
+
+            @if (characterModel != null)
+            {
+                <div class="form-section mt-4">
+                    <h4>@(characterModel.Id == 0 ? "New Character" : "Edit Character")</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-input" @bind="characterModel.Name" placeholder="Character name" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prefab Name</label>
+                            <input type="text" class="form-input" @bind="characterModel.PrefabName" placeholder="Prefab name" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Icon URL</label>
+                            <input type="url" class="form-input" @bind="characterModel.IconUrl" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bundle URL</label>
+                            <input type="url" class="form-input" @bind="characterModel.BundleUrl" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hash</label>
+                            <input type="text" class="form-input" @bind="characterModel.Hash" placeholder="Asset hash" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Size Text</label>
+                            <input type="text" class="form-input" @bind="characterModel.SizeText" placeholder="e.g., 50 MB" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unlock Coins</label>
+                            <input type="number" class="form-input" @bind="characterModel.UnlockCoins" min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Version</label>
+                            <input type="number" class="form-input" @bind="characterModel.Version" min="1" />
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="characterModel.DefaultUnlocked" />
+                                <span>Default Unlocked</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-success" @onclick="SaveCharacter" disabled="@isCharacterLoading">
+                            @if (isCharacterLoading)
+                            {
+                                <span class="spinner-sm"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <span>✓ Save Character</span>
+                            }
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CancelCharacter">Cancel</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- LEVELS -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>🎮 Levels</h2>
+                <p>Manage game levels and progression</p>
+            </div>
+            <button class="btn btn-success btn-sm" @onclick="NewLevel">+ Add Level</button>
+        </div>
+        <div class="card-body">
+            @if (config.LevelConfiguration != null && config.LevelConfiguration.Any())
+            {
+                <div class="items-list">
+                    @foreach (var l in config.LevelConfiguration ?? Enumerable.Empty<LevelConfiguration>())
+                    {
+                        if (l == null) continue;
+
+                        <div class="list-item">
+                            <div class="item-info">
+                                <h4>@(l.Name ?? "Unnamed")</h4>
+                                <p class="item-meta">Version: <strong>@l.Version</strong> | Unlock: <strong>@l.UnlockCoins</strong> 🪙 | Coins: <strong>@l.CoinSpawnAmount</strong></p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-sm btn-warning" @onclick="() => EditLevel(l)">✏️ Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteLevel(l)">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-state">No levels configured yet. Click "Add Level" to get started.</p>
+            }
+
+            @if (levelModel != null)
+            {
+                <div class="form-section mt-4">
+                    <h4>@(levelModel.Id == 0 ? "New Level" : "Edit Level")</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-input" @bind="levelModel.Name" placeholder="Level name" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prefab Name</label>
+                            <input type="text" class="form-input" @bind="levelModel.PrefabName" placeholder="Prefab name" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Icon URL</label>
+                            <input type="url" class="form-input" @bind="levelModel.IconUrl" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bundle URL</label>
+                            <input type="url" class="form-input" @bind="levelModel.BundleUrl" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Size Text</label>
+                            <input type="text" class="form-input" @bind="levelModel.SizeText" placeholder="e.g., 100 MB" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unlock Coins</label>
+                            <input type="number" class="form-input" @bind="levelModel.UnlockCoins" min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Coin Spawn Amount</label>
+                            <input type="number" class="form-input" @bind="levelModel.CoinSpawnAmount" min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Spawn Mode</label>
+                            <input type="text" class="form-input" @bind="levelModel.SpawnMode" placeholder="e.g., 'random', 'fixed'" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Version</label>
+                            <input type="number" class="form-input" @bind="levelModel.Version" min="1" />
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="levelModel.DefaultUnlocked" />
+                                <span>Default Unlocked</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-success" @onclick="SaveLevel" disabled="@isLevelLoading">
+                            @if (isLevelLoading)
+                            {
+                                <span class="spinner-sm"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <span>✓ Save Level</span>
+                            }
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CancelLevel">Cancel</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- SHOP -->
+    <div class="config-card">
+        <div class="card-header">
+            <div class="header-content">
+                <h2>🛍️ Shop Items</h2>
+                <p>Manage in-game shop items and pricing</p>
+            </div>
+            <button class="btn btn-success btn-sm" @onclick="NewShop">+ Add Item</button>
+        </div>
+        <div class="card-body">
+            @if (config.ShopConfiguration != null && config.ShopConfiguration.Any())
+            {
+                <div class="items-list">
+                    @foreach (var s in config.ShopConfiguration ?? Enumerable.Empty<ShopItems>())
+                    {
+                        if (s == null) continue;
+
+                        <div class="list-item">
+                            <div class="item-info">
+                                <h4>@(s.Name ?? "Unnamed")</h4>
+                                <p class="item-meta">Price: <strong>@s.Price</strong> | Reward: <strong>@s.Reward</strong> 🎁</p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-sm btn-warning" @onclick="() => EditShop(s)">✏️ Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteShop(s)">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-state">No shop items configured yet. Click "Add Item" to get started.</p>
+            }
+
+            @if (shopModel != null)
+            {
+                <div class="form-section mt-4">
+                    <h4>@(shopModel.ShopItemId == 0 ? "New Shop Item" : "Edit Shop Item")</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Product ID *</label>
+                            <input type="text" class="form-input" @bind="shopModel.Id" placeholder="unique-product-id" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-input" @bind="shopModel.Name" placeholder="Item name" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Icon URL</label>
+                            <input type="url" class="form-input" @bind="shopModel.Icon" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Price *</label>
+                            <input type="number" class="form-input" @bind="shopModel.Price" min="0" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reward</label>
+                            <input type="number" class="form-input" @bind="shopModel.Reward" min="0" />
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-success" @onclick="SaveShop" disabled="@isShopLoading">
+                            @if (isShopLoading)
+                            {
+                                <span class="spinner-sm"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <span>✓ Save Item</span>
+                            }
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CancelShop">Cancel</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    @if (showDeleteConfirmation)
+    {
+        <div class="modal-overlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3>⚠️ Confirm Delete</h3>
+                </div>
+                <div class="modal-body">
+                    <p>@deleteConfirmationMessage</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmedDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    }
+}
+</div>
+
+@code {
+    private GameConfig config;
+    private CharacterConfiguration characterModel;
+    private LevelConfiguration levelModel;
+    private ShopItems shopModel;
+
+    private bool isLoading = true;
+    private string error;
+    private string successMessage;
+
+    // Loading states for each section
+    private bool isAdsLoading = false;
+    private bool isCoinsLoading = false;
+    private bool isAppLoading = false;
+    private bool isGameTimeLoading = false;
+    private bool isCharacterLoading = false;
+    private bool isLevelLoading = false;
+    private bool isShopLoading = false;
+
+    // Delete confirmation
+    private bool showDeleteConfirmation = false;
+    private string deleteConfirmationMessage = "";
+    private Func<Task> pendingDeleteAction;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            config = await Api.Get() ?? new GameConfig();
+
+            // DEBUG logging
+            Console.WriteLine($"✅ Page loaded - config not null: {config != null}");
+            Console.WriteLine($"   - Config.Config not null: {config.Config != null}");
+            Console.WriteLine($"   - Notification not null: {config.Config?.notification != null}");
+
+            config.AdsConfiguration ??= new AdsConfiguration { Live = new AdsMode(), Test = new AdsMode(), Mode = "Live" };
+            config.CoinConfiguration ??= new CoinConfiguration();
+
+            config.Config ??= new Config();
+            config.Config.api_base_url ??= "";
+            config.Config.backUrl ??= "";
+            config.Config.backLive ??= "";
+            config.Config.game_version ??= "";
+            config.Config.tc_url ??= "";
+            config.Config.min_game_version ??= "";
+            config.Config.latest_game_version ??= "";
+
+            // Initialize notification data - IMPORTANT: Must be initialized before use
+            if (config.Config.notification == null)
+            {
+                Console.WriteLine("⚠️ Creating new NotificationData - was NULL");
+                config.Config.notification = new NotificationData
+                {
+                    enabled = false,
+                    message = ""
+                };
+            }
+            else
+            {
+                // Ensure message is never null
+                config.Config.notification.message ??= "";
+                Console.WriteLine($"✅ NotificationData exists - enabled: {config.Config.notification.enabled}, message length: {config.Config.notification.message?.Length ?? 0}");
+            }
+
+            config.GameTimeManager ??= new GameTimeManager();
+
+            config.CharacterConfiguration = (await Api.GetCharacters()).ToList();
+            config.LevelConfiguration = (await Api.GetLevels()).ToList();
+            config.ShopConfiguration = (await Api.GetShopItems()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"❌ Error in OnInitializedAsync: {ex.Message}");
+            Console.Error.WriteLine($"   Stack: {ex.StackTrace}");
+            error = ex.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private void ShowSuccessMessage(string message)
+    {
+        successMessage = message;
+        StateHasChanged();
+        _ = Task.Delay(3000).ContinueWith(_ => 
+        {
+            successMessage = null;
+            StateHasChanged();
+        });
+    }
+
+    private void EnsureNotificationDataExists()
+    {
+        if (config?.Config == null)
+            return;
+
+        if (config.Config.notification == null)
+        {
+            config.Config.notification = new NotificationData
+            {
+                enabled = false,
+                message = ""
+            };
+        }
+        else
+        {
+            config.Config.notification.message ??= "";
+        }
+    }
+
+    // ADS
+    private async Task SaveAds()
+    {
+        if (config?.AdsConfiguration == null)
+        {
+            error = "Ads configuration is missing";
+            return;
+        }
+
+        isAdsLoading = true;
+        error = null;
+
+        try
+        {
+            config.AdsConfiguration.Live ??= new AdsMode();
+            config.AdsConfiguration.Test ??= new AdsMode();
+            config.AdsConfiguration.Mode ??= "Live";
+
+            config.AdsConfiguration.Live.BannerAdUnitId ??= "";
+            config.AdsConfiguration.Live.InterstitialAdUnitId ??= "";
+            config.AdsConfiguration.Live.RewardedAdUnitId ??= "";
+            config.AdsConfiguration.Live.RewardedInterstitialAdUnitId ??= "";
+
+            config.AdsConfiguration.Test.BannerAdUnitId ??= "";
+            config.AdsConfiguration.Test.InterstitialAdUnitId ??= "";
+            config.AdsConfiguration.Test.RewardedAdUnitId ??= "";
+            config.AdsConfiguration.Test.RewardedInterstitialAdUnitId ??= "";
+
+            await Api.UpdateAds(config.AdsConfiguration);
+            ShowSuccessMessage("✅ Ads configuration saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save ads: {ex.Message}";
+        }
+        finally
+        {
+            isAdsLoading = false;
+        }
+    }
+
+    // COINS
+    private async Task SaveCoins()
+    {
+        if (config?.CoinConfiguration == null)
+        {
+            error = "Coins configuration is missing";
+            return;
+        }
+
+        isCoinsLoading = true;
+        error = null;
+
+        try
+        {
+            if (config.CoinConfiguration.dailyReward < 0 ||
+                config.CoinConfiguration.enemyHitPenalty < 0 ||
+                config.CoinConfiguration.cointoLose < 0)
+            {
+                error = "Coin values cannot be negative";
+                return;
+            }
+
+            await Api.UpdateCoins(config.CoinConfiguration);
+            ShowSuccessMessage("✅ Coins configuration saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save coins: {ex.Message}";
+        }
+        finally
+        {
+            isCoinsLoading = false;
+        }
+    }
+
+    // APP CONFIG
+    private async Task SaveApp()
+    {
+        if (config?.Config == null)
+        {
+            error = "App configuration is missing";
+            return;
+        }
+
+        isAppLoading = true;
+        error = null;
+
+        try
+        {
+            config.Config.api_base_url ??= "";
+            config.Config.backUrl ??= "";
+            config.Config.backLive ??= "";
+            config.Config.game_version ??= "";
+            config.Config.tc_url ??= "";
+            config.Config.min_game_version ??= "";
+            config.Config.latest_game_version ??= "";
+
+            // Ensure notification data exists and is valid
+            EnsureNotificationDataExists();
+
+            await Api.UpdateApp(config.Config);
+            ShowSuccessMessage("✅ App configuration saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save app config: {ex.Message}";
+        }
+        finally
+        {
+            isAppLoading = false;
+        }
+    }
+
+    // GAME TIME
+    private async Task SaveGameTime()
+    {
+        if (config?.GameTimeManager == null)
+        {
+            error = "Game time configuration is missing";
+            return;
+        }
+
+        isGameTimeLoading = true;
+        error = null;
+
+        try
+        {
+            if (config.GameTimeManager.Level1_Duration < 0)
+            {
+                error = "Duration cannot be negative";
+                return;
+            }
+
+            await Api.UpdateGameTime(config.GameTimeManager);
+            ShowSuccessMessage("✅ Game time settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save game time: {ex.Message}";
+        }
+        finally
+        {
+            isGameTimeLoading = false;
+        }
+    }
+
+    // CHARACTERS
+    private void NewCharacter()
+    {
+        characterModel = new CharacterConfiguration
+        {
+            Name = "",
+            PrefabName = "",
+            IconUrl = "",
+            BundleUrl = "",
+            Hash = "",
+            SizeText = "",
+            UnlockCoins = 0,
+            Version = 1,
+            DefaultUnlocked = false,
+        };
+    }
+
+    private void EditCharacter(CharacterConfiguration c)
+    {
+        if (c == null) return;
+
+        characterModel = new CharacterConfiguration
+        {
+            Id = c.Id,
+            Name = c.Name ?? "",
+            PrefabName = c.PrefabName ?? "",
+            IconUrl = c.IconUrl ?? "",
+            BundleUrl = c.BundleUrl ?? "",
+            Hash = c.Hash ?? "",
+            SizeText = c.SizeText ?? "",
+            UnlockCoins = c.UnlockCoins,
+            DefaultUnlocked = c.DefaultUnlocked,
+            Version = c.Version
+        };
+    }
+
+    private void CancelCharacter() => characterModel = null;
+
+    private async Task SaveCharacter()
+    {
+        if (characterModel == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(characterModel.Name))
+        {
+            error = "Character name is required";
+            return;
+        }
+
+        if (characterModel.UnlockCoins < 0 || characterModel.Version < 1)
+        {
+            error = "Unlock coins cannot be negative and version must be at least 1";
+            return;
+        }
+
+        isCharacterLoading = true;
+        error = null;
+
+        try
+        {
+            characterModel.Name ??= "";
+            characterModel.PrefabName ??= "";
+            characterModel.IconUrl ??= "";
+            characterModel.BundleUrl ??= "";
+            characterModel.Hash ??= "";
+            characterModel.SizeText ??= "";
+
+            if (characterModel.Id == 0)
+            {
+                var characters = await Api.GetCharacters();
+                var list = characters?.ToList() ?? new List<CharacterConfiguration>();
+                int nextId = list.Any() ? list.Max(x => x.Id) + 1 : 1;
+                characterModel.Id = nextId;
+
+                await Api.InsertCharacter(characterModel);
+                ShowSuccessMessage("✅ Character created successfully!");
+            }
+            else
+            {
+                await Api.UpdateCharacter(characterModel);
+                ShowSuccessMessage("✅ Character updated successfully!");
+            }
+
+            config.CharacterConfiguration = (await Api.GetCharacters()).ToList();
+            characterModel = null;
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save character: {ex.Message}";
+        }
+        finally
+        {
+            isCharacterLoading = false;
+        }
+    }
+
+    private void ConfirmDeleteCharacter(CharacterConfiguration c)
+    {
+        if (c == null) return;
+        deleteConfirmationMessage = $"Are you sure you want to delete '{c.Name}'? This action cannot be undone.";
+        showDeleteConfirmation = true;
+        pendingDeleteAction = async () => await DeleteCharacter(c);
+    }
+
+    private async Task DeleteCharacter(CharacterConfiguration c)
+    {
+        if (c == null || c.Id == 0)
+            return;
+
+        try
+        {
+            await Api.DeleteCharacter(c.Id);
+            config.CharacterConfiguration = (await Api.GetCharacters()).ToList();
+            ShowSuccessMessage($"✅ Character '{c.Name}' deleted successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to delete character: {ex.Message}";
+        }
+    }
+
+    // LEVELS
+    private void NewLevel()
+    {
+        levelModel = new LevelConfiguration
+        {
+            Name = "",
+            PrefabName = "",
+            IconUrl = "",
+            BundleUrl = "",
+            SizeText = "",
+            SpawnMode = "",
+            TreasureSpawns = new List<TreasureSpawn>()
+        };
+    }
+
+    private void EditLevel(LevelConfiguration l)
+    {
+        if (l == null) return;
+
+        levelModel = new LevelConfiguration
+        {
+            Id = l.Id,
+            Name = l.Name ?? "",
+            PrefabName = l.PrefabName ?? "",
+            IconUrl = l.IconUrl ?? "",
+            BundleUrl = l.BundleUrl ?? "",
+            SizeText = l.SizeText ?? "",
+            UnlockCoins = l.UnlockCoins,
+            DefaultUnlocked = l.DefaultUnlocked,
+            Version = l.Version,
+            CoinSpawnAmount = l.CoinSpawnAmount,
+            SpawnMode = l.SpawnMode ?? "",
+            TreasureSpawns = l.TreasureSpawns ?? new List<TreasureSpawn>()
+        };
+    }
+
+    private void CancelLevel() => levelModel = null;
+
+    private async Task SaveLevel()
+    {
+        if (levelModel == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(levelModel.Name))
+        {
+            error = "Level name is required";
+            return;
+        }
+
+        if (levelModel.UnlockCoins < 0 || levelModel.Version < 1 || levelModel.CoinSpawnAmount < 0)
+        {
+            error = "Unlock coins and coin spawn amount cannot be negative, version must be at least 1";
+            return;
+        }
+
+        isLevelLoading = true;
+        error = null;
+
+        try
+        {
+            levelModel.Name ??= "";
+            levelModel.PrefabName ??= "";
+            levelModel.IconUrl ??= "";
+            levelModel.BundleUrl ??= "";
+            levelModel.SizeText ??= "";
+            levelModel.SpawnMode ??= "";
+            levelModel.TreasureSpawns ??= new List<TreasureSpawn>();
+
+            if (levelModel.Id == 0)
+            {
+                var levels = await Api.GetLevels();
+                var list = levels?.ToList() ?? new List<LevelConfiguration>();
+                int nextId = list.Any() ? list.Max(x => x.Id) + 1 : 1;
+                levelModel.Id = nextId;
+
+                await Api.InsertLevel(levelModel);
+                ShowSuccessMessage("✅ Level created successfully!");
+            }
+            else
+            {
+                await Api.UpdateLevel(levelModel);
+                ShowSuccessMessage("✅ Level updated successfully!");
+            }
+
+            config.LevelConfiguration = (await Api.GetLevels()).ToList();
+            levelModel = null;
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save level: {ex.Message}";
+        }
+        finally
+        {
+            isLevelLoading = false;
+        }
+    }
+
+    private void ConfirmDeleteLevel(LevelConfiguration l)
+    {
+        if (l == null) return;
+        deleteConfirmationMessage = $"Are you sure you want to delete '{l.Name}'? This action cannot be undone.";
+        showDeleteConfirmation = true;
+        pendingDeleteAction = async () => await DeleteLevel(l);
+    }
+
+    private async Task DeleteLevel(LevelConfiguration l)
+    {
+        if (l == null || l.Id == 0)
+            return;
+
+        try
+        {
+            await Api.DeleteLevel(l.Id);
+            config.LevelConfiguration = (await Api.GetLevels()).ToList();
+            ShowSuccessMessage($"✅ Level '{l.Name}' deleted successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to delete level: {ex.Message}";
+        }
+    }
+
+    // SHOP
+    private void NewShop()
+    {
+        shopModel = new ShopItems
+        {
+            ShopItemId = 0,
+            Id = "",
+            Name = "",
+            Icon = "",
+            Price = 0,
+            Reward = 0,
+            IsDeleted = false
+        };
+    }
+
+    private void EditShop(ShopItems s)
+    {
+        if (s == null) return;
+
+        shopModel = new ShopItems
+        {
+            ShopItemId = s.ShopItemId,
+            Id = s.Id ?? "",
+            Name = s.Name ?? "",
+            Icon = s.Icon ?? "",
+            Price = s.Price,
+            Reward = s.Reward,
+            IsDeleted = s.IsDeleted
+        };
+    }
+
+    private void CancelShop() => shopModel = null;
+
+    private async Task SaveShop()
+    {
+        if (shopModel == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(shopModel.Id))
+        {
+            error = "Product ID is required";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(shopModel.Name))
+        {
+            error = "Item name is required";
+            return;
+        }
+
+        if (shopModel.Price < 0 || shopModel.Reward < 0)
+        {
+            error = "Price and reward cannot be negative";
+            return;
+        }
+
+        isShopLoading = true;
+        error = null;
+
+        try
+        {
+            shopModel.Id ??= "";
+            shopModel.Name ??= "";
+            shopModel.Icon ??= "";
+
+            if (shopModel.ShopItemId == 0)
+            {
+                var items = await Api.GetShopItems();
+                var list = (items ?? Enumerable.Empty<ShopItems>())
+                           .Where(x => x != null)
+                           .ToList();
+
+                shopModel.ShopItemId = list.Any()
+                    ? list.Max(x => x.ShopItemId) + 1
+                    : 1;
+
+                await Api.InsertShopItem(shopModel);
+                ShowSuccessMessage("✅ Shop item created successfully!");
+            }
+            else
+            {
+                await Api.UpdateShopItem(shopModel);
+                ShowSuccessMessage("✅ Shop item updated successfully!");
+            }
+
+            var updated = await Api.GetShopItems();
+            config.ShopConfiguration = (updated ?? Enumerable.Empty<ShopItems>())
+                                       .Where(x => x != null && !x.IsDeleted)
+                                       .ToList();
+
+            shopModel = null;
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to save shop item: {ex.Message}";
+        }
+        finally
+        {
+            isShopLoading = false;
+        }
+    }
+
+    private void ConfirmDeleteShop(ShopItems s)
+    {
+        if (s == null) return;
+        deleteConfirmationMessage = $"Are you sure you want to delete '{s.Name}'? This action cannot be undone.";
+        showDeleteConfirmation = true;
+        pendingDeleteAction = async () => await DeleteShop(s);
+    }
+
+    private async Task DeleteShop(ShopItems s)
+    {
+        if (s == null) return;
+
+        try
+        {
+            s.IsDeleted = true;
+            await Api.DeleteShopItem(s.Id);
+
+            var items = await Api.GetShopItems();
+            config.ShopConfiguration = (items ?? Enumerable.Empty<ShopItems>())
+                                       .Where(x => x != null && !x.IsDeleted)
+                                       .ToList();
+            ShowSuccessMessage($"✅ Shop item '{s.Name}' deleted successfully!");
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to delete shop item: {ex.Message}";
+        }
+    }
+
+    // Delete confirmation handlers
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        pendingDeleteAction = null;
+    }
+
+    private async Task ConfirmedDelete()
+    {
+        showDeleteConfirmation = false;
+        if (pendingDeleteAction != null)
+        {
+            await pendingDeleteAction();
+        }
+        pendingDeleteAction = null;
+    }
+}

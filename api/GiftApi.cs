@@ -64,6 +64,12 @@ namespace WASM.api
             return await _http.GetFromJsonAsync<List<GiftParticipation>>($"{BASE}/participants") ?? new List<GiftParticipation>();
         }
 
+        public async Task<bool> DeleteParticipantAsync(int giftId, string userId)
+        {
+            var response = await _http.DeleteAsync($"{BASE}/{giftId}/participants/{userId}");
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<bool> LockGiftWinnersAsync(int giftId,bool isFromEntry,string? code=null)
         {
             try

@@ -4,31 +4,52 @@
 @inject IUserApi UserApi
 @inject NavigationManager Nav
 
-<h3 class="mb-3">👥 Users</h3>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">👥 Users Management</h1>
+    <p class="text-muted">Manage and view all registered users</p>
+</div>
 
-<!-- SEARCH -->
-<input class="form-control mb-3"
-       placeholder="Search by name, email, phone, invite code, status..."
-       @bind="searchText"
-       @bind:event="oninput" />
+<div class="search-container mb-4">
+    <input class="form-control form-control-lg premium-input"
+           placeholder="🔍 Search by name, email, phone, invite code, status..."
+           @bind="searchText"
+           @bind:event="oninput" />
+</div>
 
 @if (users == null)
 {
-    <p class="text-muted">Loading users...</p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-3">Loading users...</p>
+    </div>
 }
 else if (!FilteredUsers.Any())
 {
-    <div class="alert alert-warning">No users found.</div>
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-body p-5 text-center">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🚫</div>
+            <h5 class="text-muted fw-semibold">No Users Found</h5>
+            <p class="text-muted">Try adjusting your search filters</p>
+        </div>
+    </div>
 }
 else
 {
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle small">
-                <thead class="table-light">
+    <div class="card premium-card shadow-lg border-0">
+        <div class="card-header premium-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">👥 Users List</h5>
+                <span class="badge bg-light text-dark">@FilteredUsers.Count()</span>
+            </div>
+        </div>
+
+        <div class="table-responsive premium-table-container">
+            <table class="table premium-table align-middle mb-0">
+                <thead>
                     <tr>
-                        <th>#</th>
-                        <th>ID</th>
+                        <th style="width: 60px;">#</th>
                         <th>User</th>
                         <th>Email</th>
                         <th>Phone</th>
@@ -36,62 +57,87 @@ else
                         <th>Account</th>
                         <th>Created</th>
                         <th>Last Login</th>
-                        <th>Actions</th>
+                        <th class="text-end" style="width: 200px;">Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach (var (u, i) in FilteredUsers.Select((v, i) => (v, i + 1)))
                     {
-                        <tr class="@(IsSelectedUser(u) ? "table-warning fw-semibold" : "")">
-                            <td>@i</td>
-                            <td>@u.Id</td>
-
+                        <tr class="premium-row @(IsSelectedUser(u) ? "selected-row" : "")">
                             <td>
-                                <img src="@u.ProfileImage"
-                                     class="rounded-circle me-2"
-                                     style="width:32px;height:32px"
-                                     onerror="this.style.display='none'" />
-
-                                <!-- KEEP ORIGINAL NAVIGATION -->
-                                <button class="btn btn-link p-0 fw-semibold"
-                                        @onclick="() => ShowUserCoins(u)">
-                                    @(u.Name ?? "(No Name)")
-                                </button>
+                                <span class="badge bg-gradient-primary">@i</span>
                             </td>
 
-                            <td>@u.Email</td>
-                            <td>@u.Phone</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(u.ProfileImage))
+                                    {
+                                        <img src="@u.ProfileImage"
+                                             class="rounded-circle"
+                                             style="width:32px;height:32px;object-fit:cover;"
+                                             onerror="this.style.display='none'" />
+                                    }
+                                    <button class="btn btn-link text-start p-0 user-link"
+                                            @onclick="() => ShowUserCoins(u)">
+                                        <div class="fw-semibold">@(u.Name ?? "(No Name)")</div>
+                                        <div class="text-muted small">@u.NickName</div>
+                                    </button>
+                                </div>
+                            </td>
 
                             <td>
-                                <span class="badge @(u.isActive ? "bg-success" : "bg-danger")">
-                                    @(u.isActive ? "Active" : "Inactive")
+                                <a href="mailto:@u.Email" class="text-primary">@u.Email</a>
+                            </td>
+
+                            <td>
+                                <span class="text-muted">@u.Phone</span>
+                            </td>
+
+                            <td>
+                                <span class="status-badge @(u.isActive ? "active" : "inactive")">
+                                    @(u.isActive ? "✓ Active" : "✗ Inactive")
                                 </span>
                             </td>
 
-                            <td>@u.AccountStatus</td>
-                            <td>@u.CreatedAt.ToString("dd MMM yyyy")</td>
-                            <td>@u.LastLogin.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="badge bg-info text-white">@u.AccountStatus</span>
+                            </td>
 
-                            <td class="text-nowrap">
-                                <button class="btn btn-outline-secondary btn-sm me-1"
-                                        @onclick="() => ViewUser(u)">
-                                    👁 View
-                                </button>
+                            <td>
+                                <span class="text-muted">@u.CreatedAt.ToString("dd MMM yyyy")</span>
+                            </td>
 
-                                <button class="btn btn-outline-primary btn-sm me-1"
-                                        @onclick="() => EditUser(u)">
-                                    ✏ Edit
-                                </button>
+                            <td>
+                                <span class="text-muted">@u.LastLogin.ToString("dd MMM yyyy")</span>
+                            </td>
 
-                                <button class="btn btn-warning btn-sm me-1"
-                                        @onclick="() => DeactivateUser(u)">
-                                    🚫
-                                </button>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-icon-info"
+                                            title="View User"
+                                            @onclick="() => ViewUser(u)">
+                                        👁
+                                    </button>
 
-                                <button class="btn btn-danger btn-sm"
-                                        @onclick="() => AskForceDelete(u)">
-                                    🗑
-                                </button>
+                                    <button class="btn btn-sm btn-icon-primary"
+                                            title="Edit User"
+                                            @onclick="() => EditUser(u)">
+                                        ✏️
+                                    </button>
+
+                                    <button class="btn btn-sm btn-icon-warning"
+                                            title="Deactivate User"
+                                            @onclick="() => DeactivateUser(u)">
+                                        🚫
+                                    </button>
+
+                                    <button class="btn btn-sm btn-icon-danger"
+                                            title="Force Delete"
+                                            @onclick="() => AskForceDelete(u)">
+                                        🗑
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -101,43 +147,81 @@ else
     </div>
 }
 
-<!-- VIEW MODAL (UNCHANGED DATA, READ ONLY) -->
+<!-- VIEW MODAL (READ ONLY) -->
 @if (viewUser != null)
 {
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
+    <div class="premium-modal-backdrop">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content premium-modal">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">👤 User Details</h5>
-                    <button class="btn-close" @onclick="CloseView"></button>
-                </div>
+                    <div class="modal-header premium-modal-header">
+                        <h5 class="modal-title fw-bold">👤 User Details</h5>
+                        <button class="btn-close btn-close-white" @onclick="CloseView"></button>
+                    </div>
 
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-3 text-center">
-                            <img src="@viewUser.ProfileImage"
-                                 class="img-fluid rounded-circle mb-2"
-                                 style="max-width:120px"
-                                 onerror="this.style.display='none'" />
-                        </div>
+                    <div class="modal-body">
+                        <div class="row g-4">
+                            <div class="col-md-4 text-center">
+                                @if (!string.IsNullOrEmpty(viewUser.ProfileImage))
+                                {
+                                    <img src="@viewUser.ProfileImage"
+                                         class="img-fluid rounded-circle mb-3"
+                                         style="max-width:120px;border:4px solid #667eea;"
+                                         onerror="this.style.display='none'" />
+                                }
+                                <h6 class="fw-bold">@viewUser.Name</h6>
+                                <span class="badge bg-gradient-primary">@viewUser.AccountStatus</span>
+                            </div>
 
-                        <div class="col-md-9">
-                            <p><b>ID:</b> @viewUser.Id</p>
-                            <p><b>Google ID:</b> @viewUser.GoogleId</p>
-                            <p><b>Name:</b> @viewUser.Name</p>
-                            <p><b>Nick Name:</b> @viewUser.NickName</p>
-                            <p><b>Email:</b> @viewUser.Email</p>
-                            <p><b>Phone:</b> @viewUser.Phone</p>
-                            <p><b>Address:</b> @viewUser.Address</p>
+                            <div class="col-md-8">
+                                <div class="info-group">
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">User ID</label>
+                                        <p class="info-value"><code>@viewUser.Id</code></p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Google ID</label>
+                                        <p class="info-value">@(string.IsNullOrEmpty(viewUser.GoogleId) ? "N/A" : viewUser.GoogleId)</p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Name</label>
+                                        <p class="info-value">@viewUser.Name</p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Nickname</label>
+                                        <p class="info-value">@viewUser.NickName</p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Email</label>
+                                        <p class="info-value"><a href="mailto:@viewUser.Email" class="text-primary">@viewUser.Email</a></p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Phone</label>
+                                        <p class="info-value">@viewUser.Phone</p>
+                                    </div>
+
+                                    <div class="info-item mb-3">
+                                        <label class="info-label">Address</label>
+                                        <p class="info-value text-wrap">@viewUser.Address</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseView">Close</button>
-                </div>
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-premium-secondary" @onclick="CloseView">
+                            Close
+                        </button>
+                    </div>
 
+                </div>
             </div>
         </div>
     </div>
@@ -146,72 +230,83 @@ else
 <!-- EDIT MODAL -->
 @if (editUser != null)
 {
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
+    <div class="premium-modal-backdrop">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content premium-modal">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">✏ Edit User</h5>
-                    <button class="btn-close" @onclick="CloseEdit"></button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="row g-3">
-
-                        <div class="col-md-6">
-                            <label>Name</label>
-                            <input class="form-control" @bind="editUser.Name" />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label>Nick Name</label>
-                            <input class="form-control" @bind="editUser.NickName" />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label>Email</label>
-                            <input class="form-control" @bind="editUser.Email" />
-                        </div>
-
-                        <div class="col-md-6">
-                            <label>Phone</label>
-                            <input class="form-control" @bind="editUser.Phone" />
-                        </div>
-
-                        <div class="col-md-12">
-                            <label>Address</label>
-                            <textarea class="form-control" rows="2"
-                                      @bind="editUser.Address"></textarea>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label>Account Status</label>
-                            <input class="form-control" @bind="editUser.AccountStatus" />
-                        </div>
-
-                        <div class="col-md-6 d-flex align-items-center">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       @bind="editUser.isActive" />
-                                <label class="form-check-label">
-                                    Active
-                                </label>
-                            </div>
-                        </div>
-
+                    <div class="modal-header premium-modal-header">
+                        <h5 class="modal-title fw-bold">✏️ Edit User</h5>
+                        <button class="btn-close btn-close-white" @onclick="CloseEdit"></button>
                     </div>
-                </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseEdit">
-                        Cancel
-                    </button>
-                    <button class="btn btn-success" @onclick="SaveEdit">
-                        💾 Save
-                    </button>
-                </div>
+                    <div class="modal-body">
+                        <div class="row g-4">
 
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Name</label>
+                                <input class="form-control premium-input" 
+                                       @bind="editUser.Name"
+                                       placeholder="User name..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nickname</label>
+                                <input class="form-control premium-input" 
+                                       @bind="editUser.NickName"
+                                       placeholder="Nickname..." />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input class="form-control premium-input" 
+                                       @bind="editUser.Email"
+                                       placeholder="email@example.com" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Phone</label>
+                                <input class="form-control premium-input" 
+                                       @bind="editUser.Phone"
+                                       placeholder="+1234567890" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Address</label>
+                                <textarea class="form-control premium-input" 
+                                          rows="2"
+                                          @bind="editUser.Address"
+                                          placeholder="Street address..."></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Account Status</label>
+                                <input class="form-control premium-input" 
+                                       @bind="editUser.AccountStatus"
+                                       placeholder="Active, Banned, etc..." />
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end">
+                                <label class="premium-switch me-3">
+                                    <input type="checkbox" @bind="editUser.isActive">
+                                    <span class="slider round"></span>
+                                </label>
+                                <label class="form-label fw-semibold mb-0">Active</label>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-premium-secondary" @onclick="CloseEdit">
+                            Cancel
+                        </button>
+                        <button class="btn btn-premium-primary" @onclick="SaveEdit">
+                            <span class="btn-icon">💾</span> Save Changes
+                        </button>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
@@ -220,18 +315,33 @@ else
 <!-- FORCE DELETE CONFIRM -->
 @if (deleteUser != null)
 {
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-danger">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                </div>
-                <div class="modal-body">
-                    Delete <b>@deleteUser.Name</b> permanently?
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                    <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+    <div class="premium-modal-backdrop">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content premium-modal">
+
+                    <div class="modal-header premium-modal-header-danger">
+                        <h5 class="modal-title fw-bold">⚠️ Confirm Delete</h5>
+                        <button class="btn-close btn-close-white" @onclick="CancelDelete"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="fs-5 fw-semibold mb-3">Are you sure?</p>
+                        <p class="text-muted">
+                            Permanently delete user <strong class="text-danger">@deleteUser.Name</strong> (@deleteUser.Email)?
+                        </p>
+                        <p class="text-muted small">This action cannot be undone.</p>
+                    </div>
+
+                    <div class="modal-footer bg-light">
+                        <button class="btn btn-premium-secondary" @onclick="CancelDelete">
+                            No, Keep User
+                        </button>
+                        <button class="btn btn-danger" @onclick="ConfirmDelete">
+                            Yes, Delete Permanently
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -344,3 +454,460 @@ else
         return u.Id.ToString() == selectedUserId;
     }
 }
+
+<style>
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Search Container */
+    .search-container {
+        position: relative;
+    }
+
+    .premium-input {
+        border: 2px solid #e8ecf1;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #f8fafc;
+    }
+
+    .premium-input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .premium-input::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 700px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .premium-row {
+        transition: all 0.2s ease;
+    }
+
+    .premium-row:hover {
+        background-color: #f0f4ff;
+    }
+
+    .premium-row.selected-row {
+        background-color: #fef3c7;
+    }
+
+    /* User Link */
+    .user-link {
+        color: #1f2937;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .user-link:hover {
+        color: #667eea;
+    }
+
+    .user-link:hover .fw-semibold {
+        color: #667eea;
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .status-badge.active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Button Icons */
+    .btn-icon-info,
+    .btn-icon-primary,
+    .btn-icon-danger,
+    .btn-icon-warning {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        border: none;
+    }
+
+    .btn-icon-info {
+        background-color: #dbeafe;
+        color: #0369a1;
+    }
+
+    .btn-icon-info:hover {
+        background-color: #bfdbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
+    }
+
+    .btn-icon-primary {
+        background-color: #dbeafe;
+        color: #0369a1;
+    }
+
+    .btn-icon-primary:hover {
+        background-color: #bfdbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
+    }
+
+    .btn-icon-danger {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-icon-danger:hover {
+        background-color: #fecaca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-icon-warning {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+
+    .btn-icon-warning:hover {
+        background-color: #fde68a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Modal Styling */
+    .premium-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .premium-modal {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .premium-modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+
+    .premium-modal-header-danger {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+
+    .premium-modal .modal-body {
+        padding: 2rem;
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    .premium-modal .modal-footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        background-color: #f9fafb;
+    }
+
+    /* Info Group */
+    .info-group {
+        padding: 0;
+    }
+
+    .info-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: block;
+        font-weight: 700;
+        color: #667eea;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        margin: 0;
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    .info-value code {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+    }
+
+    /* Premium Switch */
+    .premium-switch {
+        position: relative;
+        display: inline-block;
+        width: 56px;
+        height: 28px;
+    }
+
+    .premium-switch input {
+        display: none;
+    }
+
+    .premium-switch .slider {
+        position: absolute;
+        cursor: pointer;
+        background-color: #cbd5e1;
+        border-radius: 34px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .premium-switch .slider:before {
+        content: "";
+        position: absolute;
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .premium-switch input:checked + .slider {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .premium-switch input:checked + .slider:before {
+        transform: translateX(28px);
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
+        }
+
+        .btn-icon-info,
+        .btn-icon-primary,
+        .btn-icon-danger,
+        .btn-icon-warning {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+        }
+
+        .btn-premium-primary,
+        .btn-premium-secondary {
+            width: 100%;
+        }
+
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+    }
+</style>

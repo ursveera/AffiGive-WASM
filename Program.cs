@@ -1,7 +1,6 @@
 using AffigiveUIBalzor.api;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using WASM;
 using WASM.api;
 using WASM.api.WASM.api;
@@ -59,5 +58,6 @@ builder.Services.AddScoped<ISupportApi, SupportApi>();
 builder.Services.AddScoped<Iytapi, YtApi>();
 builder.Services.AddScoped<IAdminNotificationApi, AdminNotificationApi>();
 builder.Services.AddScoped<IShopApi, ShopApi>();
+builder.Services.AddScoped<IGameConfigApi, GameConfigApi>();
 
 await builder.Build().RunAsync();

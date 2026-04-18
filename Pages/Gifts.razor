@@ -5,29 +5,34 @@
 @inject IGiftApi GiftApi
 @inject NavigationManager Nav
 
-<h3 class="mb-3">🎁 Gift Manager</h3>
+<div class="page-header mb-4">
+    <h1 class="display-5 fw-bold mb-2">🎁 Gift Manager</h1>
+    <p class="text-muted">Manage and configure your gift campaigns</p>
+</div>
 
-<input class="form-control mb-3"
-       placeholder="Search by provider or prize pool..."
-       @bind="searchText"
-       @bind:event="oninput" />
+<div class="search-container mb-4">
+    <input class="form-control form-control-lg premium-input"
+           placeholder="🔍 Search by provider or prize pool..."
+           @bind="searchText"
+           @bind:event="oninput" />
+</div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-white fw-semibold py-3 border-bottom">
-        Gift List
+<div class="card premium-card shadow-lg border-0">
+    <div class="card-header premium-header">
+        <h5 class="mb-0">📋 Gift List</h5>
     </div>
 
-    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light position-sticky top-0 shadow-sm">
+    <div class="table-responsive premium-table-container">
+        <table class="table premium-table align-middle mb-0">
+            <thead>
                 <tr>
-                    <th @onclick="() => SortBy(nameof(GiftMaster.Provider))">Provider</th>
+                    <th @onclick="() => SortBy(nameof(GiftMaster.Provider))" class="sortable">Provider</th>
                     <th>Image</th>
                     <th>Prize Pool</th>
                     <th>Winners</th>
                     <th>Coins</th>
                     <th>Slots</th>
-                     <th>From</th>
+                    <th>From</th>
                     <th>To</th>
                     <th>Ends</th>
                     <th>Code</th>
@@ -41,9 +46,10 @@
             <tbody>
                 @if (!filteredGifts.Any())
                 {
-                    <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
-                            🚫 No gifts found
+                    <tr class="empty-state">
+                        <td colspan="14" class="text-center py-5">
+                            <div class="empty-state-icon mb-3">🚫</div>
+                            <p class="text-muted fs-6">No gifts found</p>
                         </td>
                     </tr>
                 }
@@ -51,118 +57,115 @@
                 {
                     @foreach (var gift in filteredGifts)
                     {
-                        <tr>
-                            <td><span class="badge bg-primary">@gift.Provider</span></td>
+                        <tr class="premium-row">
+                            <td>
+                                <span class="badge bg-gradient-primary">@gift.Provider</span>
+                            </td>
 
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(gift.Image))
                                 {
                                     <img src="@gift.Image"
-                                         style="width:70px;height:70px;border-radius:6px;object-fit:cover;" />
+                                         class="gift-image"
+                                         alt="@gift.Provider" />
                                 }
                             </td>
 
-                            <td>@gift.PrizePoolText</td>
-                            <td>@gift.WinnerText</td>
+                            <td><span class="fw-semibold">@gift.PrizePoolText</span></td>
+                            <td><span class="fw-semibold">@gift.WinnerText</span></td>
 
                             <td>
-                                <span class="badge bg-success">@gift.CoinsRequired</span>
+                                <span class="badge bg-gradient-success coins-badge">@gift.CoinsRequired</span>
                             </td>
 
                             <td>
-                                <span class="badge bg-info">
+                                <span class="badge bg-gradient-info slots-badge">
                                     @gift.RemainingSlots / @gift.TotalSlots
                                 </span>
                             </td>
-                            <td>
-                                @gift.FromDate.ToString("dd MMM yyyy")
-                            </td>
+                            <td class="date-cell">@gift.FromDate.ToString("dd MMM yyyy")</td>
 
+                            <td class="date-cell">@gift.ToDate.ToString("dd MMM yyyy")</td>
                             <td>
-                                @gift.ToDate.ToString("dd MMM yyyy")
-                            </td>
-                            <td>
-                                <span class="badge @GetEndsBadge(gift.ToDate)">
+                                <span class="badge @GetEndsBadge(gift.ToDate) ends-badge">
                                     @GetEndsText(gift.ToDate)
                                 </span>
                             </td>
                             <td>
-                                @gift.Code
+                                <code class="code-badge">@gift.Code</code>
                             </td>
 
                             <td>
-                                <span class="badge @(gift.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(gift.IsActive ? "Active" : "Inactive")
+                                <span class="status-badge @(gift.IsActive ? "active" : "inactive")">
+                                    @(gift.IsActive ? "✓ Active" : "✗ Inactive")
                                 </span>
                             </td>
                             <td>
-                                <span class="badge @(gift.isFromEntry ? "bg-success" : "bg-secondary")">
-                                    @(gift.isFromEntry ? "Active" : "Inactive")
+                                <span class="status-badge @(gift.isFromEntry ? "active" : "inactive")">
+                                    @(gift.isFromEntry ? "✓ Yes" : "✗ No")
                                 </span>
                             </td>
                             <td>
-                                <span class="badge @(gift.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(gift.WinnersLocked ? "Locked" : "Not Locked")
+                                <span class="status-badge @(gift.WinnersLocked ? "locked" : "unlocked")">
+                                    @(gift.WinnersLocked ? "🔒 Locked" : "🔓 Open")
                                 </span>
                             </td>
 
                             <td class="text-end">
-
-                                <!-- Row 1 -->
-                                <div class="d-flex justify-content-end mb-1">
-                                    <button class="btn btn-outline-info btn-sm me-1"
-                                            title="Joined Participants"
-                                            @onclick="() => ViewParticipants(gift.Id)">
-                                        👥
-                                    </button>
-
-                                    @if (!gift.WinnersLocked)
-                                    {
-                                        <button class="btn btn-outline-success btn-sm me-1"
-                                                title="Lock Winners"
-                                                disabled="@isLocking"
-                                                @onclick="() => LockWinners(gift.Id, gift.isFromEntry, gift.Code)">
-                                            🏆
+                                <div class="btn-group-vertical btn-group-sm w-100">
+                                    <div class="d-flex justify-content-end gap-2 mb-2">
+                                        <button class="btn btn-sm btn-icon-info"
+                                                title="Joined Participants"
+                                                @onclick="() => ViewParticipants(gift.Id)">
+                                            👥
                                         </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-outline-warning btn-sm me-1"
-                                                title="Unlock Winners"
-                                                disabled="@isLocking"
-                                                @onclick="() => UnlockWinners(gift.Id)">
-                                            🔓
+
+                                        @if (!gift.WinnersLocked)
+                                        {
+                                            <button class="btn btn-sm btn-icon-success"
+                                                    title="Lock Winners"
+                                                    disabled="@isLocking"
+                                                    @onclick="() => LockWinners(gift.Id, gift.isFromEntry, gift.Code)">
+                                                🏆
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-icon-warning"
+                                                    title="Unlock Winners"
+                                                    disabled="@isLocking"
+                                                    @onclick="() => UnlockWinners(gift.Id)">
+                                                🔓
+                                            </button>
+                                        }
+
+                                        <button class="btn btn-sm btn-icon-dark"
+                                                title="View Winners"
+                                                @onclick="() => ViewWinners(gift.Id)">
+                                            👁
                                         </button>
-                                    }
+                                    </div>
 
-                                    <button class="btn btn-outline-dark btn-sm"
-                                            title="View Winners"
-                                            @onclick="() => ViewWinners(gift.Id)">
-                                        👁
-                                    </button>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-icon-primary"
+                                                title="Edit Gift"
+                                                @onclick="() => EditGift(gift)">
+                                            ✏️
+                                        </button>
+
+                                        <button class="btn btn-sm btn-icon-danger"
+                                                title="Delete Gift"
+                                                @onclick="() => DeleteGift(gift.Id)">
+                                            🗑
+                                        </button>
+
+                                        <button class="btn btn-sm btn-icon-dark-danger"
+                                                title="Force Delete (Permanent)"
+                                                @onclick="() => PrepareForceDelete(gift.Id)">
+                                            💀
+                                        </button>
+                                    </div>
                                 </div>
-
-                                <!-- Row 2 -->
-                                <div class="d-flex justify-content-end">
-                                    <button class="btn btn-outline-primary btn-sm me-1"
-                                            title="Edit Gift"
-                                            @onclick="() => EditGift(gift)">
-                                        ✏️
-                                    </button>
-
-                                    <button class="btn btn-outline-danger btn-sm me-1"
-                                            title="Delete Gift"
-                                            @onclick="() => DeleteGift(gift.Id)">
-                                        🗑
-                                    </button>
-
-                                    <button class="btn btn-danger btn-sm"
-                                            title="Force Delete (Permanent)"
-                                            @onclick="() => PrepareForceDelete(gift.Id)">
-                                        💀
-                                    </button>
-                                </div>
-
                             </td>
 
                         </tr>
@@ -173,232 +176,270 @@
     </div>
 </div>
 
-<div class="card shadow-sm border-0 mt-4">
-    <div class="card-header bg-white fw-semibold py-3 border-bottom">
-        @(isEditMode ? "✏️ Edit Gift" : "➕ Create Gift")
+<div class="card premium-card shadow-lg border-0 mt-5">
+    <div class="card-header premium-header">
+        <h5 class="mb-0">@(isEditMode ? "✏️ Edit Gift" : "➕ Create Gift")</h5>
     </div>
 
-    <div class="card-body">
-        <div class="row g-3">
+    <div class="card-body p-4">
+        <div class="row g-4">
 
             <div class="col-md-4">
-                <label class="form-label">Provider</label>
-                <input class="form-control" @bind="giftModel.Provider" @ref="providerInput" />
+                <label class="form-label fw-semibold">Provider</label>
+                <input class="form-control premium-input" @bind="giftModel.Provider" @ref="providerInput" placeholder="e.g., Amazon" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Prize Pool Amount</label>
-                <input class="form-control" @bind="giftModel.WinnerPrizeAmount" />
+                <label class="form-label fw-semibold">Prize Pool Amount</label>
+                <input class="form-control premium-input" @bind="giftModel.WinnerPrizeAmount" placeholder="e.g., $500" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Prize Pool Text</label>
-                <input class="form-control" @bind="giftModel.PrizePoolText" />
+                <label class="form-label fw-semibold">Prize Pool Text</label>
+                <input class="form-control premium-input" @bind="giftModel.PrizePoolText" placeholder="e.g., $500 Amazon Gift Card" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Winners Count</label>
-                <input class="form-control" @bind="giftModel.WinnerCount" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Winner Text</label>
-                <input class="form-control" @bind="giftModel.WinnerText" />
+                <label class="form-label fw-semibold">Winners Count</label>
+                <input class="form-control premium-input" type="number" @bind="giftModel.WinnerCount" placeholder="e.g., 10" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Coins Required</label>
-                <input type="number" class="form-control" @bind="giftModel.CoinsRequired" />
+                <label class="form-label fw-semibold">Winner Text</label>
+                <input class="form-control premium-input" @bind="giftModel.WinnerText" placeholder="e.g., 10 Lucky Winners" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Total Slots</label>
-                <input type="number" class="form-control" @bind="giftModel.TotalSlots" />
+                <label class="form-label fw-semibold">Coins Required</label>
+                <input type="number" class="form-control premium-input" @bind="giftModel.CoinsRequired" placeholder="e.g., 100" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Remaining Slots</label>
-                <input type="number" class="form-control" @bind="giftModel.RemainingSlots" />
+                <label class="form-label fw-semibold">Total Slots</label>
+                <input type="number" class="form-control premium-input" @bind="giftModel.TotalSlots" placeholder="e.g., 1000" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">From Date</label>
+                <label class="form-label fw-semibold">Remaining Slots</label>
+                <input type="number" class="form-control premium-input" @bind="giftModel.RemainingSlots" placeholder="e.g., 500" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">From Date</label>
                 <input type="date"
-                       class="form-control"
+                       class="form-control premium-input"
                        @bind-value="giftModel.FromDate"
                        @bind-value:event="onchange" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">To Date</label>
+                <label class="form-label fw-semibold">To Date</label>
                 <input type="date"
-                       class="form-control"
+                       class="form-control premium-input"
                        @bind-value="giftModel.ToDate"
                        @bind-value:event="onchange" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Image URL</label>
-                <input class="form-control" @bind="giftModel.Image" />
+                <label class="form-label fw-semibold">Image URL</label>
+                <input class="form-control premium-input" @bind="giftModel.Image" placeholder="https://..." />
             </div>
 
-
-            <div class="col-md-4 d-flex align-items-center mt-3">
-                <label class="form-label fw-semibold me-3">Valid</label>
-                <label class="switch">
-                    <input type="checkbox" @bind="giftModel.IsActive">
-                    <span class="slider round"></span>
-                </label>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100">
+                    <label class="form-label fw-semibold mb-3">Valid</label>
+                    <label class="premium-switch">
+                        <input type="checkbox" @bind="giftModel.IsActive">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
 
-            <div class="col-md-4 d-flex align-items-center mt-3">
-                <label class="form-label fw-semibold me-3">WinnersLocked</label>
-                <label class="switch">
-                    <input type="checkbox" @bind="giftModel.WinnersLocked">
-                    <span class="slider round"></span>
-                </label>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100">
+                    <label class="form-label fw-semibold mb-3">Winners Locked</label>
+                    <label class="premium-switch">
+                        <input type="checkbox" @bind="giftModel.WinnersLocked">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
-            <div class="col-md-4 d-flex align-items-center mt-3">
-                <label class="form-label fw-semibold me-3">Is From Entry</label>
-                <label class="switch">
-                    <input type="checkbox" @bind="giftModel.isFromEntry">
-                    <span class="slider round"></span>
-                </label>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100">
+                    <label class="form-label fw-semibold mb-3">Is From Entry</label>
+                    <label class="premium-switch">
+                        <input type="checkbox" @bind="giftModel.isFromEntry">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
             </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100">
+                    <label class="form-label fw-semibold mb-3">Allow Duplicate</label>
+                    <label class="premium-switch">
+                        <input type="checkbox" @bind="giftModel.AllowDuplicate">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
             <div class="col-md-4">
-                <label class="form-label">Code</label>
-                <input class="form-control" @bind="giftModel.Code" />
+                <label class="form-label fw-semibold">Group Id (Date)</label>
+                <input class="form-control premium-input" 
+                       type="date"
+                       @bind-value="groupIdDate"
+                       @bind-value:event="onchange" />
             </div>
 
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Code</label>
+                <input class="form-control premium-input" @bind="giftModel.Code" placeholder="e.g., GIFT2024" />
+            </div>
 
-            <div class="col-12 mt-3">
+            <div class="col-12">
                 @if (!IsDateValid())
                 {
-                    <div class="text-danger mb-2">
-                        ❌ To Date must be same or after From Date
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Validation Error:</strong> To Date must be same or after From Date
                     </div>
                 }
 
-                @if (isEditMode)
-                {
-                    <button class="btn btn-warning me-2"
-                            disabled="@(!IsDateValid())"
-                            @onclick="UpdateGift">
-                        💾 Update
-                    </button>
+                <div class="button-group d-flex gap-3 mt-4">
+                    @if (isEditMode)
+                    {
+                        <button class="btn btn-lg btn-premium-warning"
+                                disabled="@(!IsDateValid())"
+                                @onclick="UpdateGift">
+                            <span class="btn-icon">💾</span> Update Gift
+                        </button>
 
-                    <button class="btn btn-secondary"
-                            @onclick="CancelEdit">
-                        ❌ Cancel
-                    </button>
-                }
-                else
-                {
-                    <button class="btn btn-primary"
-                            disabled="@(!IsDateValid())"
-                            @onclick="CreateGift">
-                        ➕ Create Gift
-                    </button>
-                }
+                        <button class="btn btn-lg btn-premium-secondary"
+                                @onclick="CancelEdit">
+                            <span class="btn-icon">❌</span> Cancel
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-lg btn-premium-primary"
+                                disabled="@(!IsDateValid())"
+                                @onclick="CreateGift">
+                            <span class="btn-icon">➕</span> Create Gift
+                        </button>
+                    }
+                </div>
             </div>
         </div>
     </div>
 </div>
-@if (showWinnersModal)
-{
-    @if (showWinnersModal)
-    {
-        <div class="modal fade show d-block" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable winners-modal">
-                <div class="modal-content">
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">🏆 Winners (Gift ID: @selectedGiftId)</h5>
-                        <button class="btn-close" @onclick="CloseWinners"></button>
-                    </div>
+                    @if (showWinnersModal)
+                    {
+                        <div class="premium-modal-backdrop">
+                            <div class="modal fade show d-block" tabindex="-1">
+                                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable winners-modal">
+                                    <div class="modal-content premium-modal">
+                                        <div class="modal-header premium-modal-header">
+                                            <h5 class="modal-title fw-bold">🏆 Winners (Gift ID: @selectedGiftId)</h5>
+                                            <button class="btn-close btn-close-white" @onclick="CloseWinners"></button>
+                                        </div>
 
-                    <div class="modal-body">
-                        @if (!winners.Any())
-                        {
-                            <div class="text-muted text-center">No winners found</div>
-                        }
-                        else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>User</th>
-                                            <th>Email</th>
-                                            <th>Won At</th>
-                                            <th>NickName</th>
-                                            <th>Address</th>
-                                            <th>Phone</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var w in winners)
-                                        {
-                                            <tr>
-                                                <td>@w.U_Name (@w.UserId)</td>
-                                                <td>@w.Email</td>
-                                                <td>@w.WonAt.ToLocalTime()</td>
-                                                <td>
-                                                    <button class="btn btn-link p-0"
-                                                            @onclick="() => OpenUser(w.UserId)">
-                                                        @w.UserName (@w.UserId)
-                                                    </button>
-                                                </td>
-                                                <td class="text-wrap">@w.U_Address</td>
-                                                <td>@w.U_Phone</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                        <div class="modal-body">
+                                            @if (!winners.Any())
+                                            {
+                                                <div class="text-center py-5">
+                                                    <div class="empty-state-icon mb-3" style="font-size: 3rem;">😕</div>
+                                                    <p class="text-muted fs-6">No winners found for this gift</p>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="table-responsive">
+                                                    <table class="table premium-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>User</th>
+                                                                <th>Email</th>
+                                                                <th>Won At</th>
+                                                                <th>NickName</th>
+                                                                <th>Address</th>
+                                                                <th>Phone</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var w in winners)
+                                                            {
+                                                                <tr class="premium-row">
+                                                                    <td><strong>@w.U_Name</strong><br/><small class="text-muted">(@w.UserId)</small></td>
+                                                                    <td>@w.Email</td>
+                                                                    <td><span class="badge bg-light text-dark">@w.WonAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span></td>
+                                                                    <td>
+                                                                        <button class="btn btn-link btn-link-primary p-0"
+                                                                                @onclick="() => OpenUser(w.UserId)">
+                                                                            @w.UserName
+                                                                        </button>
+                                                                    </td>
+                                                                    <td class="text-wrap">@w.U_Address</td>
+                                                                    <td>@w.U_Phone</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <div class="modal-footer bg-light">
+                                            <button class="btn btn-premium-secondary" @onclick="CloseWinners">
+                                                Close
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        }
-                    </div>
+                        </div>
+                    }
 
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @onclick="CloseWinners">
-                            Close
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Proper backdrop -->
-        <div class="modal-backdrop fade show"></div>
-    }
-
-}
-@if (showForceDeleteModal)
-{
-    <div class="modal fade show d-block" style="background:rgba(0,0,0,.6); z-index:2000;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">⚠️ Force Delete Confirmation</h5>
-                    <button class="btn-close btn-close-white" @onclick="CancelForceDelete"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                    </div>
-                    <p class="fs-5 fw-bold">Are you absolutely sure?</p>
-                    <p class="text-muted">
-                        Force deleting Gift ID <strong>@giftIdToForceDelete</strong> will permanently remove all participants and winners. This action cannot be undone.
-                    </p>
-                </div>
-                <div class="modal-footer bg-light border-0">
-                    <button class="btn btn-secondary px-4" @onclick="CancelForceDelete">No, Keep it</button>
-                    <button class="btn btn-danger px-4" @onclick="ConfirmForceDelete">Yes, Force Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+                    @if (showForceDeleteModal)
+                    {
+                        <div class="premium-modal-backdrop">
+                            <div class="modal fade show d-block" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content premium-modal premium-modal-danger">
+                                        <div class="modal-header premium-modal-header-danger">
+                                            <h5 class="modal-title fw-bold">⚠️ Confirm Force Delete</h5>
+                                            <button class="btn-close btn-close-white" @onclick="CancelForceDelete"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="alert alert-danger d-flex align-items-center mb-3">
+                                                <i class="bi bi-exclamation-triangle fs-5 me-3"></i>
+                                                <span class="fw-bold">This action cannot be undone!</span>
+                                            </div>
+                                            <p class="fs-5 fw-semibold mb-3">Are you absolutely sure?</p>
+                                            <p class="text-muted">
+                                                Force deleting Gift ID <strong class="text-danger">@giftIdToForceDelete</strong> will:
+                                            </p>
+                                            <ul class="text-muted">
+                                                <li>Permanently remove all participants</li>
+                                                <li>Delete all winner records</li>
+                                                <li>Cannot be recovered</li>
+                                            </ul>
+                                        </div>
+                                        <div class="modal-footer bg-light border-0 gap-2">
+                                            <button class="btn btn-premium-secondary px-4" @onclick="CancelForceDelete">
+                                                No, Keep it
+                                            </button>
+                                            <button class="btn btn-premium-danger px-4" @onclick="ConfirmForceDelete">
+                                                Yes, Force Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
 @code {
     private bool isLocking = false;
 
@@ -409,6 +450,7 @@
     private List<GiftMaster> filteredGifts = new();
 
     private GiftMaster giftModel = CreateDefaultGift();
+    private DateTime groupIdDate = DateTime.UtcNow.Date;
 
     private bool isEditMode = false;
     private string searchText = "";
@@ -427,13 +469,13 @@
         showWinnersModal = false;
         winners.Clear();
     }
-    private async Task LockWinners(int giftId, bool isFromEntry,string? code=null)
+    private async Task LockWinners(int giftId, bool isFromEntry, string? code = null)
     {
         isLocking = true;
 
         try
         {
-            if (await GiftApi.LockGiftWinnersAsync(giftId,isFromEntry,code))
+            if (await GiftApi.LockGiftWinnersAsync(giftId, isFromEntry, code))
             {
                 await LoadGifts();
                 Nav.NavigateTo($"/admin/ranks/{giftId}");
@@ -506,8 +548,12 @@
 
     private async Task CreateGift()
     {
+        // Convert DateTime to DDMMYYYY format and store as string
+        giftModel.GroupId = groupIdDate.ToString("ddMMyyyy");
+
         await GiftApi.CreateAsync(giftModel);
         giftModel = CreateDefaultGift();
+        groupIdDate = DateTime.UtcNow.Date;
         await LoadGifts();
     }
 
@@ -530,9 +576,32 @@
             WinnerPrizeAmount = gift.WinnerPrizeAmount,
             WinnersLocked = gift.WinnersLocked,
             isFromEntry = gift.isFromEntry,
-            Code = gift.Code
-
+            Code = gift.Code,
+            AllowDuplicate = gift.AllowDuplicate,
+            GroupId = gift.GroupId
         };
+
+        // Convert GroupId string (DDMMYYYY) to DateTime for date picker
+        if (!string.IsNullOrEmpty(gift.GroupId) && gift.GroupId.Length == 8)
+        {
+            if (int.TryParse(gift.GroupId.Substring(0, 2), out int day) &&
+                int.TryParse(gift.GroupId.Substring(2, 2), out int month) &&
+                int.TryParse(gift.GroupId.Substring(4, 4), out int year))
+            {
+                try
+                {
+                    groupIdDate = new DateTime(year, month, day);
+                }
+                catch
+                {
+                    groupIdDate = DateTime.UtcNow.Date;
+                }
+            }
+        }
+        else
+        {
+            groupIdDate = DateTime.UtcNow.Date;
+        }
 
         isEditMode = true;
         focusProviderAfterEdit = true;
@@ -540,9 +609,13 @@
 
     private async Task UpdateGift()
     {
+        // Convert DateTime to DDMMYYYY format and store as string
+        giftModel.GroupId = groupIdDate.ToString("ddMMyyyy");
+
         await GiftApi.UpdateAsync(giftModel.Id, giftModel);
         isEditMode = false;
         giftModel = CreateDefaultGift();
+        groupIdDate = DateTime.UtcNow.Date;
         await LoadGifts();
     }
 
@@ -550,6 +623,7 @@
     {
         isEditMode = false;
         giftModel = CreateDefaultGift();
+        groupIdDate = DateTime.UtcNow.Date;
     }
 
     private async Task DeleteGift(int id)
@@ -628,85 +702,572 @@
 }
 
 <style>
-    .modern-input {
+    /* Page Header */
+    .page-header {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .page-header h1 {
+        color: white;
+        letter-spacing: -0.5px;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+    }
+
+    /* Search Container */
+    .search-container {
+        position: relative;
+    }
+
+    .premium-input {
+        border: 2px solid #e8ecf1;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #f8fafc;
+    }
+
+    .premium-input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .premium-input::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Premium Card */
+    .premium-card {
+        border-radius: 16px;
+        border: none;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .premium-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .premium-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+        border: none !important;
+    }
+
+    .premium-header h5 {
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+    }
+
+    /* Table Styling */
+    .premium-table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+
+    .premium-table thead {
+        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .premium-table thead th {
+        border: none;
+        color: #1f2937;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .premium-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .premium-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sortable:hover {
+        background-color: #f0f4ff;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background-color: #f9fafb;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+
+    /* Badges */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
         border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #ced4da;
-        transition: 0.25s;
     }
 
-        .modern-input:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.15rem rgba(13,110,253,0.25);
-        }
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+    }
 
-    .modern-btn {
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .coins-badge,
+    .slots-badge {
+        font-weight: 700;
+        padding: 0.6rem 1rem !important;
         border-radius: 8px;
-        transition: .2s;
     }
 
-        .modern-btn:hover {
-            transform: scale(1.08);
-        }
-
-    .table-row-modern:hover {
-        background-color: #eef3ff !important;
-        transition: .2s;
+    .ends-badge {
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
     }
 
-    .switch {
+    .code-badge {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .status-badge.active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-badge.locked {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.unlocked {
+        background-color: #dbeafe;
+        color: #0c4a6e;
+    }
+
+    /* Gift Image */
+    .gift-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .gift-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Date Cells */
+    .date-cell {
+        color: #4b5563;
+        font-weight: 500;
+    }
+
+    /* Button Styling */
+    .btn-icon-info,
+    .btn-icon-success,
+    .btn-icon-warning,
+    .btn-icon-danger,
+    .btn-icon-dark,
+    .btn-icon-primary,
+    .btn-icon-dark-danger {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        border: none;
+    }
+
+    .btn-icon-info {
+        background-color: #dbeafe;
+        color: #0369a1;
+    }
+
+    .btn-icon-info:hover {
+        background-color: #bfdbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
+    }
+
+    .btn-icon-success {
+        background-color: #d1fae5;
+        color: #059669;
+    }
+
+    .btn-icon-success:hover {
+        background-color: #a7f3d0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+    }
+
+    .btn-icon-warning {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+
+    .btn-icon-warning:hover {
+        background-color: #fde68a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+    }
+
+    .btn-icon-danger {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-icon-danger:hover {
+        background-color: #fecaca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-icon-dark {
+        background-color: #e5e7eb;
+        color: #1f2937;
+    }
+
+    .btn-icon-dark:hover {
+        background-color: #d1d5db;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(31, 41, 55, 0.2);
+    }
+
+    .btn-icon-primary {
+        background-color: #dbeafe;
+        color: #0369a1;
+    }
+
+    .btn-icon-primary:hover {
+        background-color: #bfdbfe;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.2);
+    }
+
+    .btn-icon-dark-danger {
+        background-color: #7c2d12;
+        color: #fecaca;
+    }
+
+    .btn-icon-dark-danger:hover {
+        background-color: #9a3412;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(124, 45, 18, 0.3);
+    }
+
+    /* Premium Buttons */
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .btn-premium-warning,
+    .btn-premium-danger {
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 12px 24px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-icon {
+        margin-right: 8px;
+    }
+
+    .btn-premium-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-premium-primary:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-premium-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-premium-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-secondary:hover:not(:disabled) {
+        background-color: #d1d5db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-premium-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-premium-warning:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-premium-warning:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-premium-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-premium-danger:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-premium-danger:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .button-group {
+        margin-top: 2rem;
+    }
+
+    /* Premium Switch */
+    .premium-switch {
         position: relative;
         display: inline-block;
-        width: 48px;
-        height: 24px;
+        width: 56px;
+        height: 28px;
     }
 
-        .switch input {
-            display: none;
-        }
+    .premium-switch input {
+        display: none;
+    }
 
-    .slider {
+    .premium-switch .slider {
         position: absolute;
         cursor: pointer;
-        background-color: #ccc;
+        background-color: #cbd5e1;
         border-radius: 34px;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        transition: .4s;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-        .slider:before {
-            content: "";
-            position: absolute;
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+    .premium-switch .slider:before {
+        content: "";
+        position: absolute;
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .premium-switch input:checked + .slider {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .premium-switch input:checked + .slider:before {
+        transform: translateX(28px);
+    }
+
+    .premium-switch input:disabled + .slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Modal Styling */
+    .premium-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .premium-modal {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .premium-modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+
+    .premium-modal-header-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        color: white;
+        border: none;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+
+    .premium-modal .modal-body {
+        padding: 2rem;
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    .premium-modal .modal-footer {
+        border-top: 1px solid #e5e7eb;
+        padding: 1.5rem;
+    }
+
+    /* Alert Styling */
+    .alert-danger {
+        background-color: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        border-radius: 10px;
+    }
+
+    /* Scrollbar Styling */
+    .premium-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .premium-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .premium-table-container {
+            max-height: 400px;
         }
 
-    input:checked + .slider {
-        background-color: #0d6efd;
-    }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
+        .btn-icon-info,
+        .btn-icon-success,
+        .btn-icon-warning,
+        .btn-icon-danger,
+        .btn-icon-dark,
+        .btn-icon-primary,
+        .btn-icon-dark-danger {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
         }
 
-    .winners-modal {
-        max-width: 95vw !important; /* Almost full screen */
-    }
+        .button-group {
+            flex-direction: column;
+        }
 
-        .winners-modal .modal-content {
+        .btn-premium-primary,
+        .btn-premium-secondary,
+        .btn-premium-warning,
+        .btn-premium-danger {
             width: 100%;
         }
 
-        .winners-modal .modal-body {
-            overflow-x: auto;
+        .page-header {
+            padding: 1.5rem 1rem;
         }
 
+        .page-header h1 {
+            font-size: 1.75rem;
+        }
+    }
 </style>
